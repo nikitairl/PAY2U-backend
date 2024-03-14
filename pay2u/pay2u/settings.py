@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     "services",
     "payments",
     "banking",
-    'rest_framework',
+    "rest_framework",
 ]
 
 MIDDLEWARE = [
@@ -48,6 +48,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "pay2u.middleware.AutoLoginMiddleware",
 ]
 
 ROOT_URLCONF = "pay2u.urls"
@@ -87,13 +88,22 @@ DATABASES = {
 
 
 AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.%s' % validator}
-    for validator in [
-        'UserAttributeSimilarityValidator',
-        'MinimumLengthValidator',
-        'CommonPasswordValidator',
-        'NumericPasswordValidator',
-    ]
+    {
+        "NAME": "django.contrib.auth.password_validation"
+        ".UserAttributeSimilarityValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation"
+        ".MinimumLengthValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation"
+        ".CommonPasswordValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation"
+        ".NumericPasswordValidator",
+    },
 ]
 
 # Internationalization
@@ -117,3 +127,5 @@ STATIC_URL = "/static/"
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+AUTH_USER_MODEL = 'users.User'

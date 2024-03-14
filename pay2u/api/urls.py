@@ -1,6 +1,8 @@
-from rest_framework.routers import DefaultRouter
-from pay2u import users, subscriptions, services, payments, banking
+from django.urls import path
 
+from .views import UserViewSet
 
-router = DefaultRouter()
-router.register(r"users", users.UserViewSet)
+urlpatterns = [
+    path("users/", UserViewSet.as_view({"get": "list"})),
+    path("users/self/", UserViewSet.as_view({"get": "retrieve"})),
+]
