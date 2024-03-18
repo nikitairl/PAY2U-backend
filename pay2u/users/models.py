@@ -51,19 +51,3 @@ class User(AbstractBaseUser, PermissionsMixin):
         db_table = "users"
         verbose_name = "Пользователь"
         verbose_name_plural = "Пользователи"
-
-
-# class UserSubscription(models.Model):
-#     id = models.BigAutoField(primary_key=True)
-#     status = BooleanField(initial=False)
-#     renewal = BooleanField(initial=False)
-#     activation = BooleanField(initial=False)
-#     subscription_date_start = models.DateTimeField()
-#     subscription_date_end = models.DateTimeField()
-#     users_id = models.ForeignKey(User, on_delete=models.CASCADE)
-#     subscription_plan = models.ForeignKey(
-#         Subscription, on_delete=models.RESTRICT
-#     )
-#     access_code = models.ForeignKey(
-#         AccessCode, on_delete=models.RESTRICT
-#     )

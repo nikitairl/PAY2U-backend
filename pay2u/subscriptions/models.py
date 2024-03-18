@@ -37,12 +37,55 @@ class Subscription(models.Model):
     activation_method = models.CharField(max_length=20, choices=SUB_METHODS)
 
     class Meta:
-        verbose_name = "Подписка"
-        verbose_name_plural = "Подписки"
+        verbose_name = "План подписки"
+        verbose_name_plural = "Планы подписки"
 
     def __str__(self):
         return self.name
 
 
 class AccessCode(models.Model):
-    pass
+    id = models.BigAutoField(primary_key=True)
+    name = models.CharField(max_length=50, default="Код доступа")
+    end_date = models.DateTimeField(default=None)
+    status = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = "Код доступа"
+        verbose_name_plural = "Коды доступа"
+
+    def __str__(self):
+        return self.name
+
+
+class UserSubscription(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    status = models.BooleanField(default=True)
+    activation = models.BooleanField(default=True)
+    start = models.DateTimeField()
+    end = models.DateTimeField()
+    trial = models.BooleanField()
+    user_id = models.ForeignKey(
+        "users.User",
+        on_delete=models.RESTRICT,
+        related_name="user_subscription",
+    )
+    subscription = models.ForeignKey(
+        "subscriptions.Subscription",
+        on_delete=models.RESTRICT,
+        related_name="user_subscription",
+    )
+    access_code = models.ForeignKey(
+        AccessCode,
+        on_delete=models.RESTRICT,
+        related_name="user_subscription",
+        blank=True,
+        null=True
+    )
+
+    class Meta:
+        verbose_name = "Подписка пользователя"
+        verbose_name_plural = "Подписки пользователей"
+
+    def __str__(self):
+        return str(self.id)
