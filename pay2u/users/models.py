@@ -2,10 +2,6 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.db import models
 from django.contrib.auth.models import PermissionsMixin
 
-# from django.forms import BooleanField
-
-# from subscriptions.models import Subscription, AccessCode
-
 
 class UserManager(BaseUserManager):
     def create_user(self, phone, email, password):
@@ -53,19 +49,5 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     class Meta:
         db_table = "users"
-
-
-# class UserSubscription(models.Model):
-#     id = models.BigAutoField(primary_key=True)
-#     status = BooleanField(initial=False)
-#     renewal = BooleanField(initial=False)
-#     activation = BooleanField(initial=False)
-#     subscription_date_start = models.DateTimeField()
-#     subscription_date_end = models.DateTimeField()
-#     users_id = models.ForeignKey(User, on_delete=models.CASCADE)
-#     subscription_plan = models.ForeignKey(
-#         Subscription, on_delete=models.RESTRICT
-#     )
-#     access_code = models.ForeignKey(
-#         AccessCode, on_delete=models.RESTRICT
-#     )
+        verbose_name = "Пользователь"
+        verbose_name_plural = "Пользователи"
