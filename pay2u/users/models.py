@@ -2,10 +2,6 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.db import models
 from django.contrib.auth.models import PermissionsMixin
 
-# from django.forms import BooleanField
-
-# from subscriptions.models import Subscription, AccessCode
-
 
 class UserManager(BaseUserManager):
     def create_user(self, phone, email, password):
@@ -53,6 +49,8 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     class Meta:
         db_table = "users"
+        verbose_name = "Пользователь"
+        verbose_name_plural = "Пользователи"
 
 
 # class UserSubscription(models.Model):
