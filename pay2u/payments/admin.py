@@ -1,13 +1,18 @@
 from django.contrib import admin
 
-from .models import Bank, BankUser
+from .models import Document, Payment, CashbackApplied
 
 
-@admin.register(Bank)
-class BankAdmin(admin.ModelAdmin):
-    list_display = ("id", "inn")
+@admin.register(Document)
+class DocumentAdmin(admin.ModelAdmin):
+    list_display = ("id", "name", "text")
 
 
-@admin.register(BankUser)
-class BankUserAdmin(admin.ModelAdmin):
-    list_display = ("id", "bank_id", "user_id")
+@admin.register(Payment)
+class PaymentAdmin(admin.ModelAdmin):
+    list_display = ("id", "amount", "date", "receipt")
+
+
+@admin.register(CashbackApplied)
+class CashbackAppliedAdmin(admin.ModelAdmin):
+    list_display = ("id", "amount", "applied_status")
