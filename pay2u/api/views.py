@@ -1,10 +1,11 @@
+from django.db.models import Q
 from payments.models import Payment
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from subscriptions.models import UserSubscription
 from users.models import Account
-
+from datetime import datetime
 from .serializers import MainPageSerializer, PaymentsSerializer
 
 
@@ -114,6 +115,46 @@ class AccountPaymentView(APIView):  # ГОТОВО (один запрос в б�
                 .select_related("account_id")
                 .select_related("cashback_applied")
             )
+            payments_data = PaymentsSerializer(payments, many=True).data
+            return Response(payments_data, status=status.HTTP_200_OK)
+        except Account.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+class PaymentsPeriodView(APIView):  # ГОТОВО (один запрос в бд)
+    def get(self, request, user_id, time_period):
+        """
+        Метод получения данных о платежах для указанного пользователя
+        по указанному периоду времени.
+
+        Параметры:
+            user_id: идентификатор пользователя
+            time_period: 2022-01-01_2022-01-31
+            (дата начала_дата конца)
+
+        Возвращает:
+            Данные о платежах с указанным статусом ответа.
+        """
+        try:
+            start_date_str, end_date_str = time_period.split("_")
+            start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
+            end_date = datetime.strptime(end_date_str, "%Y-%m-%d")
+
+            accounts = Account.objects.filter(user__id=user_id)
+            if not accounts:
+                raise status.HTTP_404_NOT_FOUND(
+                    "No Accounts found for the given user_id."
+                )
+            payments = (
+                Payment.objects.filter(
+                    Q(account_id__in=accounts)
+                    & Q(date__range=(start_date, end_date))
+                )
+                .select_related("user_subscription__service_id")
+                .select_related("account_id")
+                .select_related("cashback_applied")
+            )
+            print(payments)
             payments_data = PaymentsSerializer(payments, many=True).data
             return Response(payments_data, status=status.HTTP_200_OK)
         except Account.DoesNotExist:
