@@ -61,6 +61,7 @@ class AccessCode(models.Model):
 class UserSubscription(models.Model):
     id = models.BigAutoField(primary_key=True)
     status = models.BooleanField(default=True)
+    renewal = models.BooleanField(default=False)
     activation = models.BooleanField(default=True)
     start = models.DateTimeField()
     end = models.DateTimeField()
