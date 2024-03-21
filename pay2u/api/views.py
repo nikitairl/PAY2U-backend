@@ -1,12 +1,15 @@
+from datetime import datetime
+
 from django.db.models import Q
-from payments.models import Payment
+from payments.models import Document, Payment
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from subscriptions.models import UserSubscription
 from users.models import Account
-from datetime import datetime
-from .serializers import MainPageSerializer, PaymentsSerializer
+
+from .serializers import (DocumentSerializer, MainPageSerializer,
+                          PaymentsSerializer)
 
 
 class MainPageView(APIView):  # ДОДЕЛАТЬ (один запрос в бд)
@@ -159,3 +162,13 @@ class PaymentsPeriodView(APIView):  # ГОТОВО (один запрос в б�
             return Response(payments_data, status=status.HTTP_200_OK)
         except Account.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+class DocumentView(APIView):
+    def get(self, request):
+        try:
+            document = Document.objects.latest("id")
+        except Document.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        document_data = DocumentSerializer(document).data
+        return Response(document_data, status=status.HTTP_200_OK)
