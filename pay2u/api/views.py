@@ -8,12 +8,15 @@ from rest_framework.views import APIView
 from subscriptions.models import UserSubscription
 from users.models import Account
 
-from .serializers import (DocumentSerializer, MainPageSerializer,
-                          PaymentsSerializer)
+from .serializers import (
+    DocumentSerializer,
+    MainPageSerializer,
+    PaymentsSerializer,
+)
 
 
 class MainPageView(APIView):  # ДОДЕЛАТЬ (один запрос в бд)
-    def get(self, user_id):
+    def get(self, request, user_id):
         """
         Метод получения данных для главного экрана приложения.
 
@@ -40,7 +43,7 @@ class MainPageView(APIView):  # ДОДЕЛАТЬ (один запрос в бд)
 
 
 class PaymentsView(APIView):  # ГОТОВО (два запроса в бд)
-    def get(self, user_id):
+    def get(self, request, user_id):
         """
         Метод получения данных о платежах для указанного пользователя.
 
@@ -70,7 +73,7 @@ class PaymentsView(APIView):  # ГОТОВО (два запроса в бд)
 
 
 class ServicePaymentsView(APIView):  # ГОТОВО (два запроса в бд)
-    def get(self, user_id, service_id):
+    def get(self, request, user_id, service_id):
         """
         Метод получения данных о платежах для указанного пользователя
         по указанному идентификатору сервиса.
@@ -101,7 +104,7 @@ class ServicePaymentsView(APIView):  # ГОТОВО (два запроса в б
 
 
 class AccountPaymentView(APIView):  # ГОТОВО (один запрос в бд)
-    def get(self, account_id):
+    def get(self, request, account_id):
         """
         Метод получения данных о платежах для указанного аккаунта.
 
@@ -164,11 +167,33 @@ class PaymentsPeriodView(APIView):  # ГОТОВО (один запрос в б�
             return Response(status=status.HTTP_404_NOT_FOUND)
 
 
-class DocumentView(APIView):
+class DocumentView(APIView):  # ГОТОВО (один запрос в бд)
     def get(self, request):
+        """
+        Метод получения данных правил сервиса.
+
+        Возвращает:
+            Данные о платежах с указанным статусом ответа.
+        """
         try:
             document = Document.objects.latest("id")
         except Document.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
         document_data = DocumentSerializer(document).data
         return Response(document_data, status=status.HTTP_200_OK)
+
+
+class PaymentView(APIView):
+    def get(self, request, payment_id):
+        try:
+            payment = (
+                Payment.objects.filter(id=payment_id)
+                .select_related("user_subscription__service_id")
+                .select_related("account_id")
+                .select_related("cashback_applied")
+                .first()
+            )
+            payment_data = PaymentsSerializer(payment).data
+            return Response(payment_data, status=status.HTTP_200_OK)
+        except Payment.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
