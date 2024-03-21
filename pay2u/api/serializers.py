@@ -4,6 +4,7 @@ from subscriptions.models import Subscription, UserSubscription, TrialPeriod
 from services.models import Service
 from payments.models import Payment, CashbackApplied
 from users.models import Account
+from payments.models import Document
 
 
 class TrialPeriodSerializer(serializers.ModelSerializer):
@@ -80,3 +81,9 @@ class PaymentsSerializer(serializers.ModelSerializer):
             "account",
             "cashback",
         )
+
+
+class DocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Document
+        fields = ("name", "text")
