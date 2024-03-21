@@ -7,6 +7,7 @@ from .views import (
     AccountPaymentView,
     PaymentsPeriodView,
     DocumentView,
+    PaymentView,
 )
 
 urlpatterns = [
@@ -37,5 +38,10 @@ urlpatterns = [
     ),
     path(
         "v1/rules/", DocumentView.as_view(), name="rules"
+    ),
+    path(
+        "v1/payments/<int:payment_id>/",
+        PaymentView.as_view(),
+        name="payment",
     )
 ]
