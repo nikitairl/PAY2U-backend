@@ -185,6 +185,15 @@ class DocumentView(APIView):  # ГОТОВО (один запрос в бд)
 
 class PaymentView(APIView):
     def get(self, request, payment_id):
+        """
+        Метод получения данных о конкретном платеже.
+
+        Параметры:
+            payment_id: идентификатор платежа
+
+        Возвращает:
+            Данные о платеже с указанным статусом ответа.
+        """
         try:
             payment = (
                 Payment.objects.filter(id=payment_id)
