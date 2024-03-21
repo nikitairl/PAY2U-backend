@@ -183,7 +183,7 @@ class DocumentView(APIView):  # ГОТОВО (один запрос в бд)
         return Response(document_data, status=status.HTTP_200_OK)
 
 
-class PaymentView(APIView):
+class PaymentView(APIView):  # ГОТОВО (один запрос в бд)
     def get(self, request, payment_id):
         """
         Метод получения данных о конкретном платеже.
