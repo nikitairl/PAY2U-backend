@@ -9,6 +9,7 @@ from .views import (
     PaymentsPeriodView,
     DocumentView,
     PaymentView,
+    CSRFTokenView,
 )
 
 urlpatterns = [
@@ -49,5 +50,10 @@ urlpatterns = [
         "v1/payments/<int:payment_id>/",
         PaymentView.as_view(),
         name="payment",
-    )
+    ),
+    path(
+        "v1/token/",
+        CSRFTokenView.as_view(),
+        name="token",
+    ),
 ]
