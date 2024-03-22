@@ -1,16 +1,18 @@
+from datetime import datetime
+
 from django.db.models import Q
-from payments.models import Payment
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from payments.models import Payment
 from subscriptions.models import UserSubscription
 from users.models import Account
-from datetime import datetime
-from .serializers import MainPageSerializer, PaymentsSerializer
+from .serializers import AccountSerializer, MainPageSerializer, PaymentsSerializer
 
 
 class MainPageView(APIView):  # ДОДЕЛАТЬ (один запрос в бд)
-    def get(self, user_id):
+    def get(self, user_id: int) -> Response:
         """
         Метод получения данных для главного экрана приложения.
 
@@ -37,7 +39,7 @@ class MainPageView(APIView):  # ДОДЕЛАТЬ (один запрос в бд)
 
 
 class PaymentsView(APIView):  # ГОТОВО (два запроса в бд)
-    def get(self, user_id):
+    def get(self, user_id: int) -> Response:
         """
         Метод получения данных о платежах для указанного пользователя.
 
@@ -67,7 +69,7 @@ class PaymentsView(APIView):  # ГОТОВО (два запроса в бд)
 
 
 class ServicePaymentsView(APIView):  # ГОТОВО (два запроса в бд)
-    def get(self, user_id, service_id):
+    def get(self, user_id: int, service_id: int) -> Response:
         """
         Метод получения данных о платежах для указанного пользователя
         по указанному идентификатору сервиса.
@@ -98,7 +100,7 @@ class ServicePaymentsView(APIView):  # ГОТОВО (два запроса в б
 
 
 class AccountPaymentView(APIView):  # ГОТОВО (один запрос в бд)
-    def get(self, account_id):
+    def get(self, account_id: int) -> Response:
         """
         Метод получения данных о платежах для указанного аккаунта.
 
@@ -121,8 +123,42 @@ class AccountPaymentView(APIView):  # ГОТОВО (один запрос в б�
             return Response(status=status.HTTP_404_NOT_FOUND)
 
 
+class AccountView(APIView):
+    def patch(
+            self,
+            request,
+            account_id: int,
+            account_status: int,
+    ) -> Response:
+        """
+        Метод изменения данных о платежах пользователя для указанного аккаунта.
+
+        Параметры:
+            user_id: идентификатор пользователя
+            account_id: идентификатор аккаунта
+            account_status: статус привязки счёта
+
+        Возвращает:
+            Изменение данных о платеже пользователя для указанного аккаунта.
+        """
+        try:
+            account_to_patch = (
+                Account.objects.filter(user__id=request.user_id)
+                .select_related("user")
+            ).filter(id=account_id)
+        except Account.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        serializer = AccountSerializer(
+            account_to_patch, data=request.data, partial=True
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_200_OK)
+
+
 class PaymentsPeriodView(APIView):  # ГОТОВО (один запрос в бд)
-    def get(self, request, user_id, time_period):
+    def get(self, request, user_id: int, time_period: str) -> Response:
         """
         Метод получения данных о платежах для указанного пользователя
         по указанному периоду времени.
