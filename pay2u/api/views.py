@@ -5,13 +5,14 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from payments.models import Payment
+from payments.models import Payment, Document
 from subscriptions.models import UserSubscription
 from users.models import Account
 from .serializers import (
     DocumentSerializer,
     MainPageSerializer,
     PaymentsSerializer,
+    AccountSerializer,
 )
 
 
