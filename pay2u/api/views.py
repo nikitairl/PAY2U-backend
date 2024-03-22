@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from django.db.models import Q
+from django.middleware.csrf import get_token
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -14,6 +15,18 @@ from .serializers import (
     PaymentsSerializer,
     AccountSerializer,
 )
+
+
+class CSRFTokenView(APIView):
+    def get(self, request):
+        """
+        Метод получения токена CSRF.
+        Postman use-case -  Headers: X-CSRFToken: <csrf_token>
+        Возвращает:
+            CSRF токен.
+        """
+        csrf_token = get_token(request)
+        return Response({'csrf_token': csrf_token})
 
 
 class MainPageView(APIView):  # ДОДЕЛАТЬ (один запрос в бд)
