@@ -5,6 +5,7 @@ from .views import (
     PaymentsView,
     ServicePaymentsView,
     AccountPaymentView,
+    AccountView,
     PaymentsPeriodView,
     DocumentView,
     PaymentView,
@@ -30,6 +31,11 @@ urlpatterns = [
         "v1/accounts/<int:account_id>/payment_history/",
         AccountPaymentView.as_view(),
         name="account_payments",
+    ),
+    path(
+        "v1/users/account/<int:account_id>/<str:account_status>",
+        AccountView.as_view(),
+        name="account_patch",
     ),
     path(
         "v1/users/<int:user_id>/payment_history/<str:time_period>/",
