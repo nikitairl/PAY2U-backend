@@ -81,6 +81,12 @@ class Account(models.Model):
         unique=True,
         verbose_name="Номер счёта",
     )
+    account_status = models.BooleanField(
+        default=False,
+        null=False,
+        blank=False,
+        verbose_name="Статус привязки счёта"
+    )
 
     class Meta:
         verbose_name = "Счёт"

@@ -5,8 +5,10 @@ from .views import (
     PaymentsView,
     ServicePaymentsView,
     AccountPaymentView,
+    AccountView,
     PaymentsPeriodView,
     DocumentView,
+    PaymentView,
 )
 
 urlpatterns = [
@@ -31,11 +33,21 @@ urlpatterns = [
         name="account_payments",
     ),
     path(
+        "v1/users/account/<int:account_id>/<str:account_status>",
+        AccountView.as_view(),
+        name="account_patch",
+    ),
+    path(
         "v1/users/<int:user_id>/payment_history/<str:time_period>/",
         PaymentsPeriodView.as_view(),
         name="payments_period",
     ),
     path(
         "v1/rules/", DocumentView.as_view(), name="rules"
+    ),
+    path(
+        "v1/payments/<int:payment_id>/",
+        PaymentView.as_view(),
+        name="payment",
     )
 ]
