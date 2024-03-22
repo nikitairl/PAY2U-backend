@@ -128,7 +128,7 @@ class AccountView(APIView):
             self,
             request,
             account_id: int,
-            account_status: int,
+            account_status: str,
     ) -> Response:
         """
         Метод изменения данных о платежах пользователя для указанного аккаунта.
@@ -143,13 +143,13 @@ class AccountView(APIView):
         """
         try:
             account_to_patch = (
-                Account.objects.filter(user__id=request.user_id)
-                .select_related("user")
-            ).filter(id=account_id)
+                Account.objects.get(user__id=request.user.id, id=account_id)
+            )
         except Account.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
+        data = {"account_status": account_status}
         serializer = AccountSerializer(
-            account_to_patch, data=request.data, partial=True
+            account_to_patch, data=data, partial=True
         )
         if serializer.is_valid():
             serializer.save()
