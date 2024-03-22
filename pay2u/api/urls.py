@@ -36,7 +36,7 @@ urlpatterns = [
     path(
         "v1/users/account/<int:account_id>/<str:account_status>",
         AccountView.as_view(),
-        name="account_patch",
+        name="account_view",
     ),
     path(
         "v1/users/<int:user_id>/payment_history/<str:time_period>/",

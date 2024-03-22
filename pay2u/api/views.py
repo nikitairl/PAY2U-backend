@@ -1,7 +1,9 @@
 from datetime import datetime
 
 from django.db.models import Q
+from django.shortcuts import get_object_or_404
 from django.middleware.csrf import get_token
+
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -142,6 +144,28 @@ class AccountPaymentView(APIView):  # ГОТОВО (один запрос в б�
 
 
 class AccountView(APIView):
+    """
+    Метод создания нового платежного счёта для указанного аккаунта.
+
+    Параметры:
+        account_id: идентификатор аккаунта
+        account_status: статус привязки счёта
+
+    Возвращает:
+        Данные о новом платежном счёте для указанного аккаунта.
+    """
+
+    def post(self, request, account_id: int, account_status: str) -> Response:
+        data = {
+            "account_status": account_status,
+        }
+        serializer = AccountSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors,
+                        status=status.HTTP_400_BAD_REQUEST)
+
     def patch(
             self,
             request,
@@ -152,7 +176,6 @@ class AccountView(APIView):
         Метод изменения данных о платежах пользователя для указанного аккаунта.
 
         Параметры:
-            user_id: идентификатор пользователя
             account_id: идентификатор аккаунта
             account_status: статус привязки счёта
 

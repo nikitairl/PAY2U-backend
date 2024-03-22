@@ -57,6 +57,7 @@ class PaymentsAccountSerializer(serializers.ModelSerializer):
 
 
 class AccountSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Account
         fields = ("id", "account_number", "account_status")
