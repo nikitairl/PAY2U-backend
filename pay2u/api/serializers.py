@@ -1,8 +1,8 @@
 from rest_framework import serializers
 
-from subscriptions.models import Subscription, UserSubscription, TrialPeriod
-from services.models import Service
 from payments.models import Payment, CashbackApplied
+from services.models import Service
+from subscriptions.models import Subscription, UserSubscription, TrialPeriod
 from users.models import Account
 from payments.models import Document
 
@@ -54,6 +54,13 @@ class PaymentsAccountSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account
         fields = ("id", "account_number")
+
+
+class AccountSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Account
+        fields = ("id", "account_number", "account_status")
 
 
 class CashbackAppliedSerializer(serializers.ModelSerializer):

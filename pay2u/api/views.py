@@ -1,19 +1,38 @@
 from datetime import datetime
 
 from django.db.models import Q
-from payments.models import Document, Payment
+from django.shortcuts import get_object_or_404
+from django.middleware.csrf import get_token
+
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from payments.models import Payment, Document
 from subscriptions.models import UserSubscription
 from users.models import Account
+from .serializers import (
+    DocumentSerializer,
+    MainPageSerializer,
+    PaymentsSerializer,
+    AccountSerializer,
+)
 
-from .serializers import (DocumentSerializer, MainPageSerializer,
-                          PaymentsSerializer)
+
+class CSRFTokenView(APIView):
+    def get(self, request):
+        """
+        Метод получения токена CSRF.
+        Postman use-case -  Headers: X-CSRFToken: <csrf_token>
+        Возвращает:
+            CSRF токен.
+        """
+        csrf_token = get_token(request)
+        return Response({'csrf_token': csrf_token})
 
 
 class MainPageView(APIView):  # ДОДЕЛАТЬ (один запрос в бд)
-    def get(self, user_id):
+    def get(self, request, user_id):
         """
         Метод получения данных для главного экрана приложения.
 
@@ -40,7 +59,7 @@ class MainPageView(APIView):  # ДОДЕЛАТЬ (один запрос в бд)
 
 
 class PaymentsView(APIView):  # ГОТОВО (два запроса в бд)
-    def get(self, user_id):
+    def get(self, request, user_id: int) -> Response:
         """
         Метод получения данных о платежах для указанного пользователя.
 
@@ -70,7 +89,7 @@ class PaymentsView(APIView):  # ГОТОВО (два запроса в бд)
 
 
 class ServicePaymentsView(APIView):  # ГОТОВО (два запроса в бд)
-    def get(self, user_id, service_id):
+    def get(self, request, user_id: int, service_id: int) -> Response:
         """
         Метод получения данных о платежах для указанного пользователя
         по указанному идентификатору сервиса.
@@ -101,7 +120,7 @@ class ServicePaymentsView(APIView):  # ГОТОВО (два запроса в б
 
 
 class AccountPaymentView(APIView):  # ГОТОВО (один запрос в бд)
-    def get(self, account_id):
+    def get(self, request, account_id: int) -> Response:
         """
         Метод получения данных о платежах для указанного аккаунта.
 
@@ -124,8 +143,63 @@ class AccountPaymentView(APIView):  # ГОТОВО (один запрос в б�
             return Response(status=status.HTTP_404_NOT_FOUND)
 
 
+class AccountView(APIView):
+    """
+    Метод создания нового платежного счёта для указанного аккаунта.
+
+    Параметры:
+        account_id: идентификатор аккаунта
+        account_status: статус привязки счёта
+
+    Возвращает:
+        Данные о новом платежном счёте для указанного аккаунта.
+    """
+
+    def post(self, request, account_id: int, account_status: str) -> Response:
+        data = {
+            "account_status": account_status,
+        }
+        serializer = AccountSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors,
+                        status=status.HTTP_400_BAD_REQUEST)
+
+    def patch(
+            self,
+            request,
+            account_id: int,
+            account_status: str,
+    ) -> Response:
+        """
+        Метод изменения данных о платежах пользователя для указанного аккаунта.
+
+        Параметры:
+            account_id: идентификатор аккаунта
+            account_status: статус привязки счёта
+
+        Возвращает:
+            Изменение данных о платеже пользователя для указанного аккаунта.
+        """
+        try:
+            account_to_patch = (
+                Account.objects.get(user__id=request.user.id, id=account_id)
+            )
+        except Account.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        data = {"account_status": account_status}
+        serializer = AccountSerializer(
+            account_to_patch, data=data, partial=True
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_200_OK)
+
+
 class PaymentsPeriodView(APIView):  # ГОТОВО (один запрос в бд)
-    def get(self, request, user_id, time_period):
+    def get(self, request, user_id: int, time_period: str) -> Response:
         """
         Метод получения данных о платежах для указанного пользователя
         по указанному периоду времени.
@@ -164,11 +238,42 @@ class PaymentsPeriodView(APIView):  # ГОТОВО (один запрос в б�
             return Response(status=status.HTTP_404_NOT_FOUND)
 
 
-class DocumentView(APIView):
+class DocumentView(APIView):  # ГОТОВО (один запрос в бд)
     def get(self, request):
+        """
+        Метод получения данных правил сервиса.
+
+        Возвращает:
+            Данные о платежах с указанным статусом ответа.
+        """
         try:
             document = Document.objects.latest("id")
         except Document.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
         document_data = DocumentSerializer(document).data
         return Response(document_data, status=status.HTTP_200_OK)
+
+
+class PaymentView(APIView):  # ГОТОВО (один запрос в бд)
+    def get(self, request, payment_id):
+        """
+        Метод получения данных о конкретном платеже.
+
+        Параметры:
+            payment_id: идентификатор платежа
+
+        Возвращает:
+            Данные о платеже с указанным статусом ответа.
+        """
+        try:
+            payment = (
+                Payment.objects.filter(id=payment_id)
+                .select_related("user_subscription__service_id")
+                .select_related("account_id")
+                .select_related("cashback_applied")
+                .first()
+            )
+            payment_data = PaymentsSerializer(payment).data
+            return Response(payment_data, status=status.HTTP_200_OK)
+        except Payment.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
