@@ -90,6 +90,25 @@ class PaymentsSerializer(serializers.ModelSerializer):
         )
 
 
+class UserSubscriptionSerializer(serializers.ModelSerializer):
+    service = ServiceSerializer(read_only=True, source="service_id")
+    trial = TrialPeriodSerializer(read_only=True, source="trial_period")
+    user_subscription = SubscriptionSerializer()
+
+    class Meta:
+        model = Subscription
+        fields = (
+            "id",
+            "name",
+            "price",
+            "period",
+            "cashback",
+            "trial",
+            "service",
+            # "subscription",
+        )
+
+
 class DocumentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Document

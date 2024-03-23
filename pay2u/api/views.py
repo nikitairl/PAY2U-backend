@@ -1,21 +1,20 @@
 from datetime import datetime
 
 from django.db.models import Q
-from django.shortcuts import get_object_or_404
 from django.middleware.csrf import get_token
-
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from payments.models import Payment, Document
-from subscriptions.models import UserSubscription
+from subscriptions.models import UserSubscription, Subscription
 from users.models import Account
 from .serializers import (
     DocumentSerializer,
     MainPageSerializer,
     PaymentsSerializer,
     AccountSerializer,
+    UserSubscriptionSerializer
 )
 
 
@@ -24,6 +23,7 @@ class CSRFTokenView(APIView):
         """
         Метод получения токена CSRF.
         Postman use-case -  Headers: X-CSRFToken: <csrf_token>
+
         Возвращает:
             CSRF токен.
         """
@@ -231,11 +231,31 @@ class PaymentsPeriodView(APIView):  # ГОТОВО (один запрос в б�
                 .select_related("account_id")
                 .select_related("cashback_applied")
             )
-            print(payments)
             payments_data = PaymentsSerializer(payments, many=True).data
             return Response(payments_data, status=status.HTTP_200_OK)
         except Account.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+class SubscriptionView(APIView):
+    def get(self, request, subscription_id: int) -> Response:
+        """
+        Метод получения данных о карточке активной подписки.
+
+        Параметры:
+            subscription_id: идентификатор активной подписки пользователя
+
+        Возвращает:
+            Данные о платежах с указанным статусом ответа.
+        """
+        try:
+            subscription = Subscription.objects.get(
+                user_subscription=request.user.id, id=subscription_id
+            )
+        except Subscription.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        subscription_data = UserSubscriptionSerializer(subscription).data
+        return Response(subscription_data, status=status.HTTP_200_OK)
 
 
 class DocumentView(APIView):  # ГОТОВО (один запрос в бд)
