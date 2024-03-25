@@ -69,7 +69,7 @@ class UserSubscription(models.Model):
     user_id = models.ForeignKey(
         "users.User",
         on_delete=models.RESTRICT,
-        related_name="user_subscription",
+        related_name="user_subscription_id",
     )
     subscription = models.ForeignKey(
         "subscriptions.Subscription",
@@ -79,7 +79,7 @@ class UserSubscription(models.Model):
     access_code = models.ForeignKey(
         AccessCode,
         on_delete=models.RESTRICT,
-        related_name="user_subscription",
+        related_name="user_access_code",
         blank=True,
         null=True
     )
