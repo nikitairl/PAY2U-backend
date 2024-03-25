@@ -20,7 +20,6 @@ services:
       - media:/app/media
     depends_on:
       - db
-      - gateway
     command: >
            bash -c "python manage.py makemigrations
            && python manage.py migrate
@@ -35,3 +34,5 @@ services:
       - media:/media
     ports:
       - 8000:80
+    depends_on:
+      - backend
