@@ -20,7 +20,13 @@ services:
       - media:/app/media
     depends_on:
       - db
-
+      - gateway
+    command: >
+           bash -c "python manage.py makemigrations
+           && python manage.py migrate
+           && python manage.py collectstatic
+           && yes | cp -r /app/collected_static/. /backend_static/static/
+           && gunicorn --bind 0.0.0.0:8000 pay2u.wsgi"
   gateway:
     build: ./gateway/.
     env_file: .env
