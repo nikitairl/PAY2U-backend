@@ -283,7 +283,6 @@ class PaymentView(APIView):  # ГОТОВО (один запрос в бд)
 
 class AvailableServicesView(APIView):
     def get(self, request):
-        # popular_services = Service.objects.order_by("-popularity")[:3]
         try:
             lowest_prices = (
                 Subscription.objects.select_related("service_id")
