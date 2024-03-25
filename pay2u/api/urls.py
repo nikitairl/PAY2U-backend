@@ -11,6 +11,7 @@ from .views import (
     DocumentView,
     PaymentView,
     CSRFTokenView,
+    AvailableServicesView,
 )
 
 urlpatterns = [
@@ -61,5 +62,10 @@ urlpatterns = [
         "v1/token/",
         CSRFTokenView.as_view(),
         name="token",
+    ),
+    path(
+        "v1/services/available/",
+        AvailableServicesView.as_view(),
+        name="available_services",
     ),
 ]

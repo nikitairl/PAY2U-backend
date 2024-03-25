@@ -1,6 +1,7 @@
 from datetime import datetime
 
-from django.db.models import Q
+
+from django.db.models import Q, Min
 from django.middleware.csrf import get_token
 from rest_framework import status
 from rest_framework.response import Response
@@ -9,12 +10,14 @@ from rest_framework.views import APIView
 from payments.models import Payment, Document
 from subscriptions.models import UserSubscription, Subscription
 from users.models import Account
+from services.models import Service
 from .serializers import (
     DocumentSerializer,
     MainPageSerializer,
     PaymentsSerializer,
     AccountSerializer,
-    UserSubscriptionSerializer
+    AvailableServiceSerializer,
+    UserSubscriptionSerializer,
 )
 
 
@@ -296,4 +299,40 @@ class PaymentView(APIView):  # ГОТОВО (один запрос в бд)
             payment_data = PaymentsSerializer(payment).data
             return Response(payment_data, status=status.HTTP_200_OK)
         except Payment.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+class AvailableServicesView(APIView):
+    def get(self, request):
+        try:
+            lowest_prices = (
+                Subscription.objects.select_related("service_id")
+                .select_related("trial_period")
+                .values(
+                    "service_id__name",
+                    "service_id__image",
+                    "period",
+                    "cashback",
+                    "trial_period__period_days",
+                    "trial_period__period_cost",
+                    "service_id__popularity",
+                    "service_id__category_id",
+                    "service_id__category_id__name",
+                )
+                .annotate(Min("price"))
+                .order_by("service_id")
+            )
+            unique_subscriptions = []
+            seen_services = set()
+
+            for subscription in lowest_prices:
+                service_name = subscription["service_id__name"]
+                if service_name not in seen_services:
+                    unique_subscriptions.append(subscription)
+                    seen_services.add(service_name)
+            ser_data = AvailableServiceSerializer(
+                unique_subscriptions, many=True
+            ).data
+            return Response(ser_data, status=status.HTTP_200_OK)
+        except Service.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
