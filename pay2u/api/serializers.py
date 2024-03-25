@@ -1,10 +1,17 @@
 from rest_framework import serializers
 
+from payments.models import Document
 from payments.models import Payment, CashbackApplied
 from services.models import Service
-from subscriptions.models import Subscription, UserSubscription, TrialPeriod
+from subscriptions.models import (AccessCode, Subscription, UserSubscription,
+                                  TrialPeriod)
 from users.models import Account
-from payments.models import Document
+
+
+class AccessCodeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AccessCode
+        fields = ("name", "end_date")
 
 
 class TrialPeriodSerializer(serializers.ModelSerializer):
@@ -25,7 +32,15 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Subscription
-        fields = ("name", "price", "period", "cashback", "service", "trial")
+        fields = (
+            "id",
+            "name",
+            "price",
+            "period",
+            "cashback",
+            "trial",
+            "service"
+        )
 
 
 class MainPageSerializer(serializers.ModelSerializer):
@@ -57,7 +72,6 @@ class PaymentsAccountSerializer(serializers.ModelSerializer):
 
 
 class AccountSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Account
         fields = ("id", "account_number", "account_status")
@@ -91,21 +105,18 @@ class PaymentsSerializer(serializers.ModelSerializer):
 
 
 class UserSubscriptionSerializer(serializers.ModelSerializer):
-    service = ServiceSerializer(read_only=True, source="service_id")
-    trial = TrialPeriodSerializer(read_only=True, source="trial_period")
-    user_subscription = SubscriptionSerializer()
+    access_code = AccessCodeSerializer()
+    user_subscription = SubscriptionSerializer(read_only=True,
+                                               source="subscription")
 
     class Meta:
-        model = Subscription
+        model = UserSubscription
         fields = (
-            "id",
-            "name",
-            "price",
-            "period",
-            "cashback",
+            "user_subscription",
+            "renewal",
+            "end",
             "trial",
-            "service",
-            # "subscription",
+            "access_code"
         )
 
 

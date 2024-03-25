@@ -237,7 +237,7 @@ class PaymentsPeriodView(APIView):  # ГОТОВО (один запрос в б�
             return Response(status=status.HTTP_404_NOT_FOUND)
 
 
-class SubscriptionView(APIView):
+class UserSubscriptionView(APIView):
     def get(self, request, subscription_id: int) -> Response:
         """
         Метод получения данных о карточке активной подписки.
@@ -249,12 +249,12 @@ class SubscriptionView(APIView):
             Данные о платежах с указанным статусом ответа.
         """
         try:
-            subscription = Subscription.objects.get(
-                user_subscription=request.user.id, id=subscription_id
-            )
+            user_subscription = UserSubscription.objects.select_related(
+                "subscription__service_id").filter(
+                user_id=request.user, id=subscription_id).first()
         except Subscription.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        subscription_data = UserSubscriptionSerializer(subscription).data
+        subscription_data = UserSubscriptionSerializer(user_subscription).data
         return Response(subscription_data, status=status.HTTP_200_OK)
 
 

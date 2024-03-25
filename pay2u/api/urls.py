@@ -4,7 +4,7 @@ from .views import (
     MainPageView,
     PaymentsView,
     ServicePaymentsView,
-    SubscriptionView,
+    UserSubscriptionView,
     AccountPaymentView,
     AccountView,
     PaymentsPeriodView,
@@ -46,7 +46,7 @@ urlpatterns = [
     ),
     path(
         "v1/users/subscriptions/<int:subscription_id>/",
-        SubscriptionView.as_view(),
+        UserSubscriptionView.as_view(),
         name="service_payments",
     ),
     path(
