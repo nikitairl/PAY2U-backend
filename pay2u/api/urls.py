@@ -12,7 +12,7 @@ from .views import (
     PaymentView,
     CSRFTokenView,
     AvailableServicesView,
-    NonActiveUserSubscriptionView
+    NonActiveUserSubscriptionView,
     СategoriesView,
 )
 
