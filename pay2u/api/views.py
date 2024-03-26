@@ -1,6 +1,5 @@
 from datetime import datetime
 
-
 from django.db.models import Q, Min
 from django.middleware.csrf import get_token
 from rest_framework import status
@@ -249,7 +248,7 @@ class UserSubscriptionView(APIView):
             subscription_id: идентификатор активной подписки пользователя
 
         Возвращает:
-            Данные о платежах с указанным статусом ответа.
+            Данные о карточке активной подписки пользователя.
         """
         try:
             user_subscription = UserSubscription.objects.select_related(
@@ -258,6 +257,28 @@ class UserSubscriptionView(APIView):
         except Subscription.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
         subscription_data = UserSubscriptionSerializer(user_subscription).data
+        return Response(subscription_data, status=status.HTTP_200_OK)
+
+
+class NonActiveUserSubscriptionView(APIView):
+    def get(self, request, user_id: int) -> Response:
+        """
+        Метод получения данных о карточке активной подписки.
+
+        Параметры:
+            user_id: идентификатор пользователя
+
+        Возвращает:
+            Данные о всех неактивных подписках пользователя.
+        """
+        try:
+            user_subscription = UserSubscription.objects.select_related(
+                "subscription__service_id").filter(
+                user_id=user_id, status=False)
+        except Subscription.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        subscription_data = UserSubscriptionSerializer(
+            user_subscription, many=True, read_only=True).data
         return Response(subscription_data, status=status.HTTP_200_OK)
 
 
