@@ -12,6 +12,8 @@ from .views import (
     PaymentView,
     CSRFTokenView,
     AvailableServicesView,
+    NonActiveUserSubscriptionView,
+    СategoriesView,
 )
 
 urlpatterns = [
@@ -51,6 +53,11 @@ urlpatterns = [
         name="service_payments",
     ),
     path(
+        "v1/users/<int:user_id>/nonactive",
+        NonActiveUserSubscriptionView.as_view(),
+        name="service_payments",
+    ),
+    path(
         "v1/rules/", DocumentView.as_view(), name="rules"
     ),
     path(
@@ -68,4 +75,9 @@ urlpatterns = [
         AvailableServicesView.as_view(),
         name="available_services",
     ),
+    path(
+        "v1/services/<str:category_name>/",
+        СategoriesView.as_view(),
+        name="categories",
+    )
 ]
