@@ -12,6 +12,7 @@ from .views import (
     PaymentView,
     CSRFTokenView,
     AvailableServicesView,
+    СategoriesView,
 )
 
 urlpatterns = [
@@ -68,4 +69,9 @@ urlpatterns = [
         AvailableServicesView.as_view(),
         name="available_services",
     ),
+    path(
+        "v1/services/<str:category_name>/",
+        СategoriesView.as_view(),
+        name="categories",
+    )
 ]
