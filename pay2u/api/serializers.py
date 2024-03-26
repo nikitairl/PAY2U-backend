@@ -1,10 +1,17 @@
 from rest_framework import serializers
 
+from payments.models import Document
 from payments.models import Payment, CashbackApplied
 from services.models import Service
-from subscriptions.models import Subscription, UserSubscription, TrialPeriod
+from subscriptions.models import (AccessCode, Subscription, UserSubscription,
+                                  TrialPeriod)
 from users.models import Account
-from payments.models import Document
+
+
+class AccessCodeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AccessCode
+        fields = ("name", "end_date")
 
 
 class TrialPeriodSerializer(serializers.ModelSerializer):
@@ -25,7 +32,15 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Subscription
-        fields = ("name", "price", "period", "cashback", "service", "trial")
+        fields = (
+            "id",
+            "name",
+            "price",
+            "period",
+            "cashback",
+            "trial",
+            "service"
+        )
 
 
 class MainPageSerializer(serializers.ModelSerializer):
@@ -57,7 +72,6 @@ class PaymentsAccountSerializer(serializers.ModelSerializer):
 
 
 class AccountSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Account
         fields = ("id", "account_number", "account_status")
@@ -90,7 +104,60 @@ class PaymentsSerializer(serializers.ModelSerializer):
         )
 
 
+class UserSubscriptionSerializer(serializers.ModelSerializer):
+    access_code = AccessCodeSerializer()
+    user_subscription = SubscriptionSerializer(read_only=True,
+                                               source="subscription")
+
+    class Meta:
+        model = UserSubscription
+        fields = (
+            "user_subscription",
+            "renewal",
+            "end",
+            "trial",
+            "access_code"
+        )
+
+
 class DocumentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Document
         fields = ("name", "text")
+
+
+class AvailableServiceSerializer(serializers.ModelSerializer):
+    min_subscription_cost = serializers.IntegerField(source="price__min")
+    service_name = serializers.StringRelatedField(source="service_id__name")
+    image = serializers.StringRelatedField(source="service_id__image")
+    trial_period_days = serializers.IntegerField(
+        source="trial_period__period_days"
+    )
+    trial_period_cost = serializers.IntegerField(
+        source="trial_period__period_cost"
+    )
+    category_id = serializers.IntegerField(source="service_id__category_id")
+    category_name = serializers.StringRelatedField(
+        source="service_id__category_id__name"
+    )
+
+    class Meta:
+        model = Subscription
+        fields = (
+            "service_name",
+            "image",
+            "min_subscription_cost",
+            "period",
+            "cashback",
+            "trial_period_days",
+            "trial_period_cost",
+            "category_id",
+            "category_name",
+        )
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if data["trial_period_days"] is None:
+            data.pop("trial_period_days")
+            data.pop("trial_period_cost")
+        return data

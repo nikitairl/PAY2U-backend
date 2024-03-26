@@ -8,6 +8,7 @@ load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+LOCAL = bool(os.getenv("LOCAL", default="False") == "True")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
@@ -20,6 +21,11 @@ if os.environ.get("DEBUG") == "True":
     DEBUG = True
 else:
     DEBUG = False
+
+if LOCAL:
+    LOCAL_DB = True
+else:
+    LOCAL_DB = False
 
 ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
 
@@ -77,13 +83,26 @@ WSGI_APPLICATION = "pay2u.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+if LOCAL_DB:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
     }
-}
+    print("Sqlite3 database configured")
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('DATABASE_NAME', 'default_db_name'),
+            'USER': os.getenv('DATABASE_USER', 'default_db_user'),
+            'PASSWORD': os.getenv('DATABASE_PASSWORD', 'default_db_password'),
+            'HOST': os.getenv('DATABASE_HOST', 'localhost'),
+            'PORT': os.getenv('DATABASE_PORT', '5432'),
+        }
+    }
+    print("Postgresql database configured")
 
 
 # Password validation
@@ -125,6 +144,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "collected_static"
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field

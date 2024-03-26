@@ -1,22 +1,24 @@
 from datetime import datetime
 
-from django.db.models import Q
-from django.shortcuts import get_object_or_404
+from django.db.models import Q, Min
 from django.middleware.csrf import get_token
-
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from payments.models import Payment, Document
-from subscriptions.models import UserSubscription
+from subscriptions.models import UserSubscription, Subscription
 from users.models import Account
+from services.models import Service
 from .serializers import (
     DocumentSerializer,
     MainPageSerializer,
     PaymentsSerializer,
     AccountSerializer,
+    AvailableServiceSerializer,
+    UserSubscriptionSerializer,
 )
+from .utils import query_min_price_sort
 
 
 class CSRFTokenView(APIView):
@@ -24,11 +26,12 @@ class CSRFTokenView(APIView):
         """
         Метод получения токена CSRF.
         Postman use-case -  Headers: X-CSRFToken: <csrf_token>
+
         Возвращает:
             CSRF токен.
         """
         csrf_token = get_token(request)
-        return Response({'csrf_token': csrf_token})
+        return Response({"csrf_token": csrf_token})
 
 
 class MainPageView(APIView):  # ДОДЕЛАТЬ (один запрос в бд)
@@ -163,14 +166,13 @@ class AccountView(APIView):
         if serializer.is_valid():
             serializer.save(user=request.user)
             return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors,
-                        status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def patch(
-            self,
-            request,
-            account_id: int,
-            account_status: str,
+        self,
+        request,
+        account_id: int,
+        account_status: str,
     ) -> Response:
         """
         Метод изменения данных о платежах пользователя для указанного аккаунта.
@@ -183,8 +185,8 @@ class AccountView(APIView):
             Изменение данных о платеже пользователя для указанного аккаунта.
         """
         try:
-            account_to_patch = (
-                Account.objects.get(user__id=request.user.id, id=account_id)
+            account_to_patch = Account.objects.get(
+                user__id=request.user.id, id=account_id
             )
         except Account.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
@@ -231,11 +233,57 @@ class PaymentsPeriodView(APIView):  # ГОТОВО (один запрос в б�
                 .select_related("account_id")
                 .select_related("cashback_applied")
             )
-            print(payments)
             payments_data = PaymentsSerializer(payments, many=True).data
             return Response(payments_data, status=status.HTTP_200_OK)
         except Account.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+class UserSubscriptionView(APIView):
+    def get(self, request, subscription_id: int) -> Response:
+        """
+        Метод получения данных о карточке активной подписки.
+
+        Параметры:
+            subscription_id: идентификатор активной подписки пользователя
+
+        Возвращает:
+            Данные о карточке активной подписки пользователя.
+        """
+        try:
+            user_subscription = (
+                UserSubscription.objects.select_related(
+                    "subscription__service_id"
+                )
+                .filter(user_id=request.user, id=subscription_id)
+                .first()
+            )
+        except Subscription.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        subscription_data = UserSubscriptionSerializer(user_subscription).data
+        return Response(subscription_data, status=status.HTTP_200_OK)
+
+
+class NonActiveUserSubscriptionView(APIView):
+    def get(self, request, user_id: int) -> Response:
+        """
+        Метод получения данных о карточке активной подписки.
+
+        Параметры:
+            user_id: идентификатор пользователя
+
+        Возвращает:
+            Данные о всех неактивных подписках пользователя.
+        """
+        try:
+            user_subscription = UserSubscription.objects.select_related(
+                "subscription__service_id").filter(
+                user_id=user_id, status=False)
+        except Subscription.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        subscription_data = UserSubscriptionSerializer(
+            user_subscription, many=True, read_only=True).data
+        return Response(subscription_data, status=status.HTTP_200_OK)
 
 
 class DocumentView(APIView):  # ГОТОВО (один запрос в бд)
@@ -276,4 +324,63 @@ class PaymentView(APIView):  # ГОТОВО (один запрос в бд)
             payment_data = PaymentsSerializer(payment).data
             return Response(payment_data, status=status.HTTP_200_OK)
         except Payment.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+class AvailableServicesView(APIView):
+    def get(self, request):
+        try:
+            lowest_prices = (
+                Subscription.objects.select_related("service_id")
+                .select_related("trial_period")
+                .values(
+                    "service_id__name",
+                    "service_id__image",
+                    "period",
+                    "cashback",
+                    "trial_period__period_days",
+                    "trial_period__period_cost",
+                    "service_id__popularity",
+                    "service_id__category_id",
+                    "service_id__category_id__name",
+                )
+                .annotate(Min("price"))
+                .order_by("service_id")
+            )
+            ser_data = AvailableServiceSerializer(
+                query_min_price_sort(lowest_prices), many=True
+            ).data
+            return Response(ser_data, status=status.HTTP_200_OK)
+        except Service.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+class СategoriesView(APIView):
+    def get(self, request, category_name: str):
+        try:
+            lowest_prices = (
+                Subscription.objects.filter(
+                    service_id__category__name=category_name
+                )
+                .select_related("service_id")
+                .select_related("trial_period")
+                .values(
+                    "service_id__name",
+                    "service_id__image",
+                    "period",
+                    "cashback",
+                    "trial_period__period_days",
+                    "trial_period__period_cost",
+                    "service_id__popularity",
+                    "service_id__category_id",
+                    "service_id__category_id__name",
+                )
+                .annotate(Min("price"))
+                .order_by("service_id")
+            )
+            ser_data = AvailableServiceSerializer(
+                query_min_price_sort(lowest_prices), many=True
+            ).data
+            return Response(ser_data, status=status.HTTP_200_OK)
+        except Service.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
