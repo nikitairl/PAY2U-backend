@@ -4,12 +4,14 @@ from .views import (
     MainPageView,
     PaymentsView,
     ServicePaymentsView,
+    UserSubscriptionView,
     AccountPaymentView,
     AccountView,
     PaymentsPeriodView,
     DocumentView,
     PaymentView,
     CSRFTokenView,
+    AvailableServicesView,
 )
 
 urlpatterns = [
@@ -44,6 +46,11 @@ urlpatterns = [
         name="payments_period",
     ),
     path(
+        "v1/users/subscriptions/<int:subscription_id>/",
+        UserSubscriptionView.as_view(),
+        name="service_payments",
+    ),
+    path(
         "v1/rules/", DocumentView.as_view(), name="rules"
     ),
     path(
@@ -55,5 +62,10 @@ urlpatterns = [
         "v1/token/",
         CSRFTokenView.as_view(),
         name="token",
+    ),
+    path(
+        "v1/services/available/",
+        AvailableServicesView.as_view(),
+        name="available_services",
     ),
 ]
