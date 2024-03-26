@@ -19,6 +19,7 @@ from .serializers import (
     AvailableServiceSerializer,
     UserSubscriptionSerializer,
 )
+from .utils import query_min_price_sort
 
 
 class CSRFTokenView(APIView):
@@ -31,7 +32,7 @@ class CSRFTokenView(APIView):
             CSRF токен.
         """
         csrf_token = get_token(request)
-        return Response({'csrf_token': csrf_token})
+        return Response({"csrf_token": csrf_token})
 
 
 class MainPageView(APIView):  # ДОДЕЛАТЬ (один запрос в бд)
@@ -166,14 +167,13 @@ class AccountView(APIView):
         if serializer.is_valid():
             serializer.save(user=request.user)
             return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors,
-                        status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def patch(
-            self,
-            request,
-            account_id: int,
-            account_status: str,
+        self,
+        request,
+        account_id: int,
+        account_status: str,
     ) -> Response:
         """
         Метод изменения данных о платежах пользователя для указанного аккаунта.
@@ -186,8 +186,8 @@ class AccountView(APIView):
             Изменение данных о платеже пользователя для указанного аккаунта.
         """
         try:
-            account_to_patch = (
-                Account.objects.get(user__id=request.user.id, id=account_id)
+            account_to_patch = Account.objects.get(
+                user__id=request.user.id, id=account_id
             )
         except Account.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
@@ -252,9 +252,13 @@ class UserSubscriptionView(APIView):
             Данные о платежах с указанным статусом ответа.
         """
         try:
-            user_subscription = UserSubscription.objects.select_related(
-                "subscription__service_id").filter(
-                user_id=request.user, id=subscription_id).first()
+            user_subscription = (
+                UserSubscription.objects.select_related(
+                    "subscription__service_id"
+                )
+                .filter(user_id=request.user, id=subscription_id)
+                .first()
+            )
         except Subscription.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
         subscription_data = UserSubscriptionSerializer(user_subscription).data
@@ -322,16 +326,39 @@ class AvailableServicesView(APIView):
                 .annotate(Min("price"))
                 .order_by("service_id")
             )
-            unique_subscriptions = []
-            seen_services = set()
-
-            for subscription in lowest_prices:
-                service_name = subscription["service_id__name"]
-                if service_name not in seen_services:
-                    unique_subscriptions.append(subscription)
-                    seen_services.add(service_name)
             ser_data = AvailableServiceSerializer(
-                unique_subscriptions, many=True
+                query_min_price_sort(lowest_prices), many=True
+            ).data
+            return Response(ser_data, status=status.HTTP_200_OK)
+        except Service.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+class СategoriesView(APIView):
+    def get(self, request, category_name: str):
+        try:
+            lowest_prices = (
+                Subscription.objects.filter(
+                    service_id__category__name=category_name
+                )
+                .select_related("service_id")
+                .select_related("trial_period")
+                .values(
+                    "service_id__name",
+                    "service_id__image",
+                    "period",
+                    "cashback",
+                    "trial_period__period_days",
+                    "trial_period__period_cost",
+                    "service_id__popularity",
+                    "service_id__category_id",
+                    "service_id__category_id__name",
+                )
+                .annotate(Min("price"))
+                .order_by("service_id")
+            )
+            ser_data = AvailableServiceSerializer(
+                query_min_price_sort(lowest_prices), many=True
             ).data
             return Response(ser_data, status=status.HTTP_200_OK)
         except Service.DoesNotExist:
