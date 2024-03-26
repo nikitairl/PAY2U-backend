@@ -13,6 +13,7 @@ from .views import (
     CSRFTokenView,
     AvailableServicesView,
     СategoriesView,
+    ServiceView,
 )
 
 urlpatterns = [
@@ -70,8 +71,13 @@ urlpatterns = [
         name="available_services",
     ),
     path(
-        "v1/services/<str:category_name>/",
+        "v1/categories/<str:category_name>/",
         СategoriesView.as_view(),
         name="categories",
-    )
+    ),
+    path(
+        "v1/services/<str:service_name>/",
+        ServiceView.as_view(),
+        name="service",
+    ),
 ]
