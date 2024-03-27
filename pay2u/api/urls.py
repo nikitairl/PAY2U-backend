@@ -14,6 +14,7 @@ from .views import (
     AvailableServicesView,
     NonActiveUserSubscriptionView,
     СategoriesView,
+    ServiceView,
     UserSubscriptionRenewalView,
 )
 
@@ -77,9 +78,14 @@ urlpatterns = [
         name="available_services",
     ),
     path(
-        "v1/services/<str:category_name>/",
+        "v1/categories/<str:category_name>/",
         СategoriesView.as_view(),
         name="categories",
+    ),
+    path(
+        "v1/services/<str:service_name>/",
+        ServiceView.as_view(),
+        name="service",
     ),
     path(
         "v1/user_subscriptions/<int:user_subscription_id>/autorenewal/",

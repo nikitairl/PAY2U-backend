@@ -364,6 +364,12 @@ class PaymentView(APIView):  # ГОТОВО (один запрос в бд)
 
 class AvailableServicesView(APIView):
     def get(self, request):
+        """
+        Метод получения доступных сервисов.
+
+        Возвращает:
+            Сервисы с тегом "available=True".
+        """
         try:
             lowest_prices = (
                 Subscription.objects.select_related("service_id")
@@ -392,6 +398,15 @@ class AvailableServicesView(APIView):
 
 class СategoriesView(APIView):
     def get(self, request, category_name: str):
+        """
+        Метод получения данных о сервисах по категории.
+
+        Параметры:
+            category_name: название категории
+
+        Возвращает:
+            Сервисы по указанной категории.
+        """
         try:
             lowest_prices = (
                 Subscription.objects.filter(
@@ -409,6 +424,47 @@ class СategoriesView(APIView):
                     "service_id__popularity",
                     "service_id__category_id",
                     "service_id__category_id__name",
+                )
+                .annotate(Min("price"))
+                .order_by("service_id")
+            )
+            ser_data = AvailableServiceSerializer(
+                query_min_price_sort(lowest_prices), many=True
+            ).data
+            return Response(ser_data, status=status.HTTP_200_OK)
+        except Service.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+class ServiceView(APIView):
+    def get(self, request, service_name: str):
+        """
+        Метод получения данных о сервисе по названию.
+
+        Параметры:
+            service_name: название сервиса
+
+        Возвращает:
+            Сервис по указанному названию.
+        """
+        try:
+            lowest_prices = (
+                Subscription.objects.filter(
+                    service_id__name=service_name
+                )
+                .select_related("service_id")
+                .select_related("trial_period")
+                .values(
+                    "service_id__name",
+                    "service_id__image",
+                    "period",
+                    "cashback",
+                    "trial_period__period_days",
+                    "trial_period__period_cost",
+                    "service_id__popularity",
+                    "service_id__category_id",
+                    "service_id__category_id__name",
+                    "service_id__popularity",
                 )
                 .annotate(Min("price"))
                 .order_by("service_id")
