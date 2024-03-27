@@ -264,6 +264,40 @@ class UserSubscriptionView(APIView):
         return Response(subscription_data, status=status.HTTP_200_OK)
 
 
+class UserSubscriptionRenewalView(APIView):
+    def patch(self, request, user_subscription_id: int):
+        """
+        Метод изменения статуса активной подписки.
+        Изменяет статус renewal в UserSubscription
+
+        Параметры:
+            user_subscription_id: идентификатор активной подписки
+        Тело запроса:
+            {
+                "renewal": "<bool>"
+            }
+
+        Returns:
+            Измененные данные активной подписки.
+        """
+        try:
+            user_subscription = UserSubscription.objects.get(
+                id=user_subscription_id
+            )
+        except UserSubscription.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        data = {
+            "renewal": request.data.get("renewal"),
+        }
+        serializer = UserSubscriptionSerializer(
+            user_subscription, data=data, partial=True
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 class NonActiveUserSubscriptionView(APIView):
     def get(self, request, user_id: int) -> Response:
         """
@@ -277,12 +311,13 @@ class NonActiveUserSubscriptionView(APIView):
         """
         try:
             user_subscription = UserSubscription.objects.select_related(
-                "subscription__service_id").filter(
-                user_id=user_id, status=False)
+                "subscription__service_id"
+            ).filter(user_id=user_id, status=False)
         except Subscription.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
         subscription_data = UserSubscriptionSerializer(
-            user_subscription, many=True, read_only=True).data
+            user_subscription, many=True, read_only=True
+        ).data
         return Response(subscription_data, status=status.HTTP_200_OK)
 
 
