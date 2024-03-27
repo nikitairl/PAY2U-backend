@@ -140,6 +140,7 @@ class AvailableServiceSerializer(serializers.ModelSerializer):
     category_name = serializers.StringRelatedField(
         source="service_id__category_id__name"
     )
+    popularity = serializers.IntegerField(source="service_id__popularity")
 
     class Meta:
         model = Subscription
@@ -153,6 +154,7 @@ class AvailableServiceSerializer(serializers.ModelSerializer):
             "trial_period_cost",
             "category_id",
             "category_name",
+            "popularity",
         )
 
     def to_representation(self, instance):
