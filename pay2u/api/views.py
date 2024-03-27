@@ -298,6 +298,29 @@ class UserSubscriptionRenewalView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class ActiveUserSubscriptionView(APIView):
+    def get(self, request, user_id: int) -> Response:
+        """
+        Метод получения данных о карточке активной подписки.
+
+        Параметры:
+            user_id: идентификатор пользователя
+
+        Возвращает:
+            Данные о всех неактивных подписках пользователя.
+        """
+        try:
+            user_subscription = UserSubscription.objects.select_related(
+                "subscription__service_id"
+            ).filter(user_id=user_id, status=True)
+        except Subscription.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        subscription_data = UserSubscriptionSerializer(
+            user_subscription, many=True, read_only=True
+        ).data
+        return Response(subscription_data, status=status.HTTP_200_OK)
+
+
 class NonActiveUserSubscriptionView(APIView):
     def get(self, request, user_id: int) -> Response:
         """
