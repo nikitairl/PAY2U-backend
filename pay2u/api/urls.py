@@ -12,8 +12,10 @@ from .views import (
     PaymentView,
     CSRFTokenView,
     AvailableServicesView,
+    NonActiveUserSubscriptionView,
     СategoriesView,
     ServiceView,
+    UserSubscriptionRenewalView,
 )
 
 urlpatterns = [
@@ -48,8 +50,13 @@ urlpatterns = [
         name="payments_period",
     ),
     path(
-        "v1/users/subscriptions/<int:subscription_id>/",
+        "v1/user_subscriptions/<int:subscription_id>/",
         UserSubscriptionView.as_view(),
+        name="service_payments",
+    ),
+    path(
+        "v1/users/<int:user_id>/nonactive",
+        NonActiveUserSubscriptionView.as_view(),
         name="service_payments",
     ),
     path(
@@ -79,5 +86,10 @@ urlpatterns = [
         "v1/services/<str:service_name>/",
         ServiceView.as_view(),
         name="service",
+    ),
+    path(
+        "v1/user_subscriptions/<int:user_subscription_id>/autorenewal/",
+        UserSubscriptionRenewalView.as_view(),
+        name="autorenewal",
     ),
 ]

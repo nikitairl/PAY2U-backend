@@ -1,6 +1,5 @@
 from datetime import datetime
 
-
 from django.db.models import Q, Min
 from django.middleware.csrf import get_token
 from rest_framework import status
@@ -249,7 +248,7 @@ class UserSubscriptionView(APIView):
             subscription_id: идентификатор активной подписки пользователя
 
         Возвращает:
-            Данные о платежах с указанным статусом ответа.
+            Данные о карточке активной подписки пользователя.
         """
         try:
             user_subscription = (
@@ -262,6 +261,63 @@ class UserSubscriptionView(APIView):
         except Subscription.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
         subscription_data = UserSubscriptionSerializer(user_subscription).data
+        return Response(subscription_data, status=status.HTTP_200_OK)
+
+
+class UserSubscriptionRenewalView(APIView):
+    def patch(self, request, user_subscription_id: int):
+        """
+        Метод изменения статуса активной подписки.
+        Изменяет статус renewal в UserSubscription
+
+        Параметры:
+            user_subscription_id: идентификатор активной подписки
+        Тело запроса:
+            {
+                "renewal": "<bool>"
+            }
+
+        Returns:
+            Измененные данные активной подписки.
+        """
+        try:
+            user_subscription = UserSubscription.objects.get(
+                id=user_subscription_id
+            )
+        except UserSubscription.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        data = {
+            "renewal": request.data.get("renewal"),
+        }
+        serializer = UserSubscriptionSerializer(
+            user_subscription, data=data, partial=True
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class NonActiveUserSubscriptionView(APIView):
+    def get(self, request, user_id: int) -> Response:
+        """
+        Метод получения данных о карточке активной подписки.
+
+        Параметры:
+            user_id: идентификатор пользователя
+
+        Возвращает:
+            Данные о всех неактивных подписках пользователя.
+        """
+        try:
+            user_subscription = UserSubscription.objects.select_related(
+                "subscription__service_id"
+            ).filter(user_id=user_id, status=False)
+        except Subscription.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        subscription_data = UserSubscriptionSerializer(
+            user_subscription, many=True, read_only=True
+        ).data
         return Response(subscription_data, status=status.HTTP_200_OK)
 
 
