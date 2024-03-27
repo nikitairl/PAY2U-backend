@@ -17,6 +17,7 @@ from .serializers import (
     AccountSerializer,
     AvailableServiceSerializer,
     UserSubscriptionSerializer,
+    UserSubscriptionsSerializer
 )
 from .utils import query_min_price_sort
 
@@ -258,9 +259,32 @@ class UserSubscriptionView(APIView):
                 .filter(user_id=request.user, id=subscription_id)
                 .first()
             )
-        except Subscription.DoesNotExist:
+        except UserSubscription.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
         subscription_data = UserSubscriptionSerializer(user_subscription).data
+        return Response(subscription_data, status=status.HTTP_200_OK)
+
+
+class UserSubscriptionsView(APIView):
+    def get(self, request, user_id: int) -> Response:
+        """
+        Метод получения данных о карточке активной подписки.
+
+        Параметры:
+            user_id: идентификатор пользователя
+
+        Возвращает:
+            Данные о всех подписках пользователя.
+        """
+        try:
+            user_subscriptions = UserSubscription.objects.select_related(
+                "subscription__service_id"
+            ).filter(user_id=user_id).order_by("status")
+        except UserSubscription.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        subscription_data = UserSubscriptionsSerializer(
+            user_subscriptions, many=True, read_only=True
+        ).data
         return Response(subscription_data, status=status.HTTP_200_OK)
 
 
