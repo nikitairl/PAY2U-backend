@@ -170,10 +170,10 @@ class AccountView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def patch(
-        self,
-        request,
-        account_id: int,
-        account_status: str,
+            self,
+            request,
+            account_id: int,
+            account_status: str,
     ) -> Response:
         """
         Метод изменения данных о платежах пользователя для указанного аккаунта.
@@ -320,6 +320,28 @@ class UserSubscriptionRenewalView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ServiceUserSubscriptionsView(APIView):
+    def get(self, request, user_id: int, service_id: int) -> Response:
+        """
+        Метод получения данных о всех подписках пользователя по сервису.
+
+        Параметры:
+            user_id: идентификатор пользователя
+            service_id: идентификатор сервиса
+
+        Возвращает:
+            Данные о всех подписках пользователя по сервису.
+        """
+        try:
+            user_subscriptions = UserSubscription.objects.filter(
+                user_id=user_id, subscription__service_id=service_id).first()
+        except UserSubscription.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        subscription_data = UserSubscriptionSerializer(
+            user_subscriptions, read_only=True).data
+        return Response(subscription_data, status=status.HTTP_200_OK)
 
 
 class ActiveUserSubscriptionView(APIView):

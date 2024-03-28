@@ -15,6 +15,7 @@ from .views import (
     PaymentsView,
     ServicePaymentsView,
     ServiceView,
+    ServiceUserSubscriptionsView,
     UserSubscriptionRenewalView,
     UserSubscriptionView,
     UserSubscriptionsView,
@@ -69,6 +70,11 @@ urlpatterns = [
     path(
         "v1/users/<int:user_id>/user_subscriptions",
         UserSubscriptionsView.as_view(),
+        name="service_payments",
+    ),
+    path(
+        "v1/users/<int:user_id>/services/<int:service_id>",
+        ServiceUserSubscriptionsView.as_view(),
         name="service_payments",
     ),
     path(
