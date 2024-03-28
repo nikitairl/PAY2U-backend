@@ -23,7 +23,7 @@ class TrialPeriodSerializer(serializers.ModelSerializer):
 class ServiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Service
-        fields = ("id", "image", "name")
+        fields = ("id", "image", "name", "availability")
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):
@@ -35,6 +35,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "name",
+            "availability",
             "price",
             "period",
             "cashback",
@@ -117,6 +118,21 @@ class UserSubscriptionSerializer(serializers.ModelSerializer):
             "end",
             "trial",
             "access_code"
+        )
+
+
+class UserSubscriptionsSerializer(serializers.ModelSerializer):
+    user_subscription = SubscriptionSerializer(read_only=True,
+                                               source="subscription")
+
+    class Meta:
+        model = UserSubscription
+        fields = (
+            "user_subscription",
+            "id",
+            "status",
+            "renewal",
+            "end",
         )
 
 

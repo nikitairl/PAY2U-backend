@@ -1,22 +1,24 @@
 from django.urls import path
 
 from .views import (
-    MainPageView,
-    PaymentsView,
-    ServicePaymentsView,
-    UserSubscriptionView,
     AccountPaymentView,
     AccountView,
-    PaymentsPeriodView,
-    DocumentView,
-    PaymentView,
-    CSRFTokenView,
+    ActiveUserSubscriptionView,
     AvailableServicesView,
-    NonActiveUserSubscriptionView,
     СategoriesView,
+    CSRFTokenView,
+    DocumentView,
+    MainPageView,
+    NonActiveUserSubscriptionView,
+    PaymentsPeriodView,
+    PaymentView,
+    PaymentsView,
+    ServicePaymentsView,
     ServiceView,
+    ServiceUserSubscriptionsView,
     UserSubscriptionRenewalView,
-    ActiveUserSubscriptionView
+    UserSubscriptionView,
+    UserSubscriptionsView,
 )
 
 urlpatterns = [
@@ -63,6 +65,16 @@ urlpatterns = [
     path(
         "v1/users/<int:user_id>/nonactive",
         NonActiveUserSubscriptionView.as_view(),
+        name="service_payments",
+    ),
+    path(
+        "v1/users/<int:user_id>/user_subscriptions",
+        UserSubscriptionsView.as_view(),
+        name="service_payments",
+    ),
+    path(
+        "v1/users/<int:user_id>/services/<int:service_id>",
+        ServiceUserSubscriptionsView.as_view(),
         name="service_payments",
     ),
     path(
