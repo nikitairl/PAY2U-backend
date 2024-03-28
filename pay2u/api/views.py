@@ -264,6 +264,63 @@ class UserSubscriptionView(APIView):
         return Response(subscription_data, status=status.HTTP_200_OK)
 
 
+class UserSubscriptionRenewalView(APIView):
+    def patch(self, request, user_subscription_id: int):
+        """
+        Метод изменения статуса активной подписки.
+        Изменяет статус renewal в UserSubscription
+
+        Параметры:
+            user_subscription_id: идентификатор активной подписки
+        Тело запроса:
+            {
+                "renewal": "<bool>"
+            }
+
+        Returns:
+            Измененные данные активной подписки.
+        """
+        try:
+            user_subscription = UserSubscription.objects.get(
+                id=user_subscription_id
+            )
+        except UserSubscription.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        data = {
+            "renewal": request.data.get("renewal"),
+        }
+        serializer = UserSubscriptionSerializer(
+            user_subscription, data=data, partial=True
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ActiveUserSubscriptionView(APIView):
+    def get(self, request, user_id: int) -> Response:
+        """
+        Метод получения данных о карточке активной подписки.
+
+        Параметры:
+            user_id: идентификатор пользователя
+
+        Возвращает:
+            Данные о всех неактивных подписках пользователя.
+        """
+        try:
+            user_subscription = UserSubscription.objects.select_related(
+                "subscription__service_id"
+            ).filter(user_id=user_id, status=True)
+        except Subscription.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        subscription_data = UserSubscriptionSerializer(
+            user_subscription, many=True, read_only=True
+        ).data
+        return Response(subscription_data, status=status.HTTP_200_OK)
+
+
 class NonActiveUserSubscriptionView(APIView):
     def get(self, request, user_id: int) -> Response:
         """
@@ -277,12 +334,13 @@ class NonActiveUserSubscriptionView(APIView):
         """
         try:
             user_subscription = UserSubscription.objects.select_related(
-                "subscription__service_id").filter(
-                user_id=user_id, status=False)
+                "subscription__service_id"
+            ).filter(user_id=user_id, status=False)
         except Subscription.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
         subscription_data = UserSubscriptionSerializer(
-            user_subscription, many=True, read_only=True).data
+            user_subscription, many=True, read_only=True
+        ).data
         return Response(subscription_data, status=status.HTTP_200_OK)
 
 
@@ -329,6 +387,12 @@ class PaymentView(APIView):  # ГОТОВО (один запрос в бд)
 
 class AvailableServicesView(APIView):
     def get(self, request):
+        """
+        Метод получения доступных сервисов.
+
+        Возвращает:
+            Сервисы с тегом "available=True".
+        """
         try:
             lowest_prices = (
                 Subscription.objects.select_related("service_id")
@@ -357,6 +421,15 @@ class AvailableServicesView(APIView):
 
 class СategoriesView(APIView):
     def get(self, request, category_name: str):
+        """
+        Метод получения данных о сервисах по категории.
+
+        Параметры:
+            category_name: название категории
+
+        Возвращает:
+            Сервисы по указанной категории.
+        """
         try:
             lowest_prices = (
                 Subscription.objects.filter(
@@ -374,6 +447,47 @@ class СategoriesView(APIView):
                     "service_id__popularity",
                     "service_id__category_id",
                     "service_id__category_id__name",
+                )
+                .annotate(Min("price"))
+                .order_by("service_id")
+            )
+            ser_data = AvailableServiceSerializer(
+                query_min_price_sort(lowest_prices), many=True
+            ).data
+            return Response(ser_data, status=status.HTTP_200_OK)
+        except Service.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+class ServiceView(APIView):
+    def get(self, request, service_name: str):
+        """
+        Метод получения данных о сервисе по названию.
+
+        Параметры:
+            service_name: название сервиса
+
+        Возвращает:
+            Сервис по указанному названию.
+        """
+        try:
+            lowest_prices = (
+                Subscription.objects.filter(
+                    service_id__name=service_name
+                )
+                .select_related("service_id")
+                .select_related("trial_period")
+                .values(
+                    "service_id__name",
+                    "service_id__image",
+                    "period",
+                    "cashback",
+                    "trial_period__period_days",
+                    "trial_period__period_cost",
+                    "service_id__popularity",
+                    "service_id__category_id",
+                    "service_id__category_id__name",
+                    "service_id__popularity",
                 )
                 .annotate(Min("price"))
                 .order_by("service_id")

@@ -1,8 +1,9 @@
 # Pay2U Backend
+[![Actions Status](https://github.com/nikitairl/PAY2U-backend/workflows/Main%20app%20workflow/badge.svg)](https://github.com/nikitairl/PAY2U-backend/actions)
 
 This repository contains the backend codebase for the Pay2U application.
 
-## Technologies Used
+## Technologies Usedq
 
 - **Django REST Framework**: A powerful and flexible toolkit for building Web APIs in Python.
 - **WIP - PostgreSQL**: An advanced open-source relational database.
