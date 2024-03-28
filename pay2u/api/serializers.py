@@ -136,6 +136,16 @@ class UserSubscriptionsSerializer(serializers.ModelSerializer):
         )
 
 
+class UserPaymentsPlanSerializer(serializers.ModelSerializer):
+    service = ServiceSerializer()
+
+    class Meta:
+        model = Payment
+        fields = (
+            "service"
+        )
+
+
 class DocumentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Document
