@@ -15,7 +15,7 @@ class TrialPeriodAdmin(admin.ModelAdmin):
 
 @admin.register(UserSubscription)
 class UserSubscriptionAdmin(admin.ModelAdmin):
-    list_display = ("status", "subscription_id", "user_id")
+    list_display = ("id", "status", "subscription_id", "subscription", "user_id")
 
 
 @admin.register(AccessCode)
