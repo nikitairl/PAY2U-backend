@@ -3,7 +3,7 @@
 
 This repository contains the backend codebase for the Pay2U application.
 
-## Technologies Usedq
+## Technologies Used
 
 - **Django REST Framework**: A powerful and flexible toolkit for building Web APIs in Python.
 - **WIP - PostgreSQL**: An advanced open-source relational database.
