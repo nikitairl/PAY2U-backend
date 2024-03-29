@@ -597,10 +597,10 @@ class AddUserSubscriptionView(APIView):
                 account_balance.balance -= (
                     active_subscription.subscription.price
                 )
-                ser_data = UserSubscriptionSerializer(active_subscription).data
                 if account_balance.balance < 0:
                     data = {"error": "Недостаточно средств на счете."}
                     return Response(data, status=status.HTTP_400_BAD_REQUEST)
+                ser_data = UserSubscriptionSerializer(active_subscription).data
                 active_subscription.save()
                 account_balance.save()
                 return Response(ser_data, status=status.HTTP_200_OK)
