@@ -381,15 +381,15 @@ class UserPaymentsPlanView(APIView):
             Данные о всех ближайших платежах пользователя.
         """
         try:
-            upcoming_payments = Payment.objects.filter(
-                user_subscription__user_id=user_id
-            ).order_by("-date")
+            upcoming_payments = UserSubscription.objects.filter(
+                user_id=user_id
+            ).order_by("-end")
         except Subscription.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        subscription_data = UserPaymentsPlanSerializer(
+        upcoming_payments_data = UserPaymentsPlanSerializer(
             upcoming_payments, many=True, read_only=True
         ).data
-        return Response(subscription_data, status=status.HTTP_200_OK)
+        return Response(upcoming_payments_data, status=status.HTTP_200_OK)
 
 
 class DocumentView(APIView):  # ГОТОВО (один запрос в бд)
