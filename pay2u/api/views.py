@@ -525,7 +525,7 @@ class AddUserSubscriptionView(APIView):
         account_balance = get_object_or_404(Account, id=account_id)
         print(account_balance.balance)
 
-        # Check if user has an active subscription for the same service
+        # Проверка есть ли подписка на сервис
         service = Subscription.objects.get(id=new_subscription_id).service_id
         print(service.id, service.name, service.image)
         try:
@@ -537,7 +537,7 @@ class AddUserSubscriptionView(APIView):
         except UserSubscription.DoesNotExist:
             active_subscription = None
         if active_subscription is not None:
-            # Если была ли подписка на этот сервис
+            # Была ли именно эта подписка
             subscription_id = active_subscription.subscription.id
             if int(subscription_id) == int(new_subscription_id):
                 # Меняем статус на True, если она не была активна и ставим дату
@@ -559,10 +559,12 @@ class AddUserSubscriptionView(APIView):
                 account_balance.save()
                 return Response(ser_data, status=status.HTTP_200_OK)
             else:
+                # Если подписка была, но другая - меняем статус и ставим дату
                 active_subscription.end = datetime.now()
                 active_subscription.status = False
                 active_subscription.renewal = False
                 active_subscription.save()
+        # Оформляем новую подписку
         subscription = Subscription.objects.get(id=new_subscription_id)
         account_balance.balance -= subscription.price
         print(account_balance.balance)
