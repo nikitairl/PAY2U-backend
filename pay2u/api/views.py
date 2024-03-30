@@ -8,15 +8,16 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from payments.models import Payment, Document
+from services.models import Service
 from subscriptions.models import UserSubscription, Subscription
 from users.models import Account, User
-from services.models import Service
 from .serializers import (
+    AccountSerializer,
+    AvailableServiceSerializer,
     DocumentSerializer,
     MainPageSerializer,
     PaymentsSerializer,
-    AccountSerializer,
-    AvailableServiceSerializer,
+    UserPaymentsPlanSerializer,
     UserSubscriptionSerializer,
     UserSubscriptionsSerializer
 )
@@ -389,6 +390,29 @@ class NonActiveUserSubscriptionView(APIView):
             user_subscription, many=True, read_only=True
         ).data
         return Response(subscription_data, status=status.HTTP_200_OK)
+
+
+class UserPaymentsPlanView(APIView):
+    def get(self, request, user_id: int):
+        """
+        Метод получения данных о ближайших платежах пользователя.
+
+        Параметры:
+            user_id: идентификатор пользователя
+
+        Возвращает:
+            Данные о всех ближайших платежах пользователя.
+        """
+        try:
+            upcoming_payments = UserSubscription.objects.filter(
+                user_id=user_id
+            ).order_by("-end")
+        except Subscription.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        upcoming_payments_data = UserPaymentsPlanSerializer(
+            upcoming_payments, many=True, read_only=True
+        ).data
+        return Response(upcoming_payments_data, status=status.HTTP_200_OK)
 
 
 class DocumentView(APIView):  # ГОТОВО (один запрос в бд)
