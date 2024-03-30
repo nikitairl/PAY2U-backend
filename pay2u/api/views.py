@@ -566,22 +566,17 @@ class AddUserSubscriptionView(APIView):
         """
         user = get_object_or_404(User, id=user_id)
         new_subscription_id = request.data.get("subscription_id")
+        subscription = Subscription.objects.get(id=new_subscription_id)
         account_id = request.data.get("account_id")
 
         account_balance = get_object_or_404(Account, id=account_id)
-        print(account_balance.balance)
-
+        update_balance = self.update_balance(subscription, account_balance)
+        if update_balance.balance < 0:
+            data = {"error": "Недостаточно средств на счете."}
+            return Response(data, status=status.HTTP_400_BAD_REQUEST)
         # Проверка есть ли подписка на сервис
-        service = Subscription.objects.get(id=new_subscription_id).service_id
-        print(service.id, service.name, service.image)
-        try:
-            active_subscription = UserSubscription.objects.get(
-                user_id=user.id,
-                subscription__service_id=service,
-                status=True,
-            )
-        except UserSubscription.DoesNotExist:
-            active_subscription = None
+        service = subscription.service_id
+        active_subscription = self.get_active_subscription(user.id, service)
         if active_subscription is not None:
             # Была ли именно эта подписка
             subscription_id = active_subscription.subscription.id
@@ -594,29 +589,49 @@ class AddUserSubscriptionView(APIView):
                 active_subscription.end = active_subscription.end + timedelta(
                     days=active_subscription.subscription.period
                 )
-                account_balance.balance -= (
-                    active_subscription.subscription.price
-                )
-                if account_balance.balance < 0:
-                    data = {"error": "Недостаточно средств на счете."}
-                    return Response(data, status=status.HTTP_400_BAD_REQUEST)
-                ser_data = UserSubscriptionSerializer(active_subscription).data
-                active_subscription.save()
-                account_balance.save()
-                return Response(ser_data, status=status.HTTP_200_OK)
+                update_balance.save()
+                return self.send_response(active_subscription)
             else:
                 # Если подписка была, но другая - меняем статус и ставим дату
-                active_subscription.end = datetime.now()
-                active_subscription.status = False
-                active_subscription.renewal = False
-                active_subscription.save()
+                self.deactivate_subscription(active_subscription)
         # Оформляем новую подписку
-        subscription = Subscription.objects.get(id=new_subscription_id)
+        update_balance.save()
+        new_subscription = self.create_new_subscription(user, subscription)
+        return self.send_response(new_subscription)
+
+    def get_active_subscription(self, user_id, service):
+        """
+        Метод проверки подписки на сервис
+        """
+        try:
+            return UserSubscription.objects.get(
+                user_id=user_id,
+                subscription__service_id=service,
+                status=True
+            )
+        except UserSubscription.DoesNotExist:
+            return None
+
+    def deactivate_subscription(self, subscription):
+        """
+        Метод деактивации подписки
+        """
+        subscription.end = datetime.now()
+        subscription.status = False
+        subscription.renewal = False
+        subscription.save()
+
+    def update_balance(self, subscription, account_balance):
+        """
+        Калькуляция баланса
+        """
         account_balance.balance -= subscription.price
-        print(account_balance.balance)
-        if account_balance.balance < 0:
-            data = {"error": "Недостаточно средств на счете."}
-            return Response(data, status=status.HTTP_400_BAD_REQUEST)
+        return account_balance
+
+    def create_new_subscription(self, user, subscription):
+        """
+        Создание нового объекта подписки
+        """
         new_subscription = UserSubscription(
             user_id=user,
             subscription=subscription,
@@ -625,9 +640,11 @@ class AddUserSubscriptionView(APIView):
             activation=True,
             start=datetime.now(),
             end=datetime.now() + timedelta(days=subscription.period),
-            trial=False,
+            trial=False
         )
-        new_subscription.save()
-        account_balance.save()
-        ser_data = UserSubscriptionSerializer(new_subscription).data
+        return new_subscription
+
+    def send_response(self, subscription):
+        ser_data = UserSubscriptionSerializer(subscription).data
+        subscription.save()
         return Response(ser_data, status=status.HTTP_200_OK)
