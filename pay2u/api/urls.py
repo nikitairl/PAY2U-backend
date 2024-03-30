@@ -16,6 +16,7 @@ from .views import (
     ServicePaymentsView,
     ServiceView,
     UserPaymentsPlanView,
+    ServiceUserSubscriptionsView,
     UserSubscriptionRenewalView,
     UserSubscriptionView,
     UserSubscriptionsView,
@@ -43,7 +44,7 @@ urlpatterns = [
         name="account_payments",
     ),
     path(
-        "v1/users/account/<int:account_id>/<str:account_status>",
+        "v1/users/account/<int:account_id>/<str:account_status>/",
         AccountView.as_view(),
         name="account_view",
     ),
@@ -58,23 +59,28 @@ urlpatterns = [
         name="service_payments",
     ),
     path(
-        "v1/users/<int:user_id>/active",
+        "v1/users/<int:user_id>/active/",
         ActiveUserSubscriptionView.as_view(),
         name="service_payments",
     ),
     path(
-        "v1/users/<int:user_id>/nonactive",
+        "v1/users/<int:user_id>/nonactive/",
         NonActiveUserSubscriptionView.as_view(),
         name="service_payments",
     ),
     path(
-        "v1/users/<int:user_id>/user_subscriptions",
+        "v1/users/<int:user_id>/user_subscriptions/",
         UserSubscriptionsView.as_view(),
         name="service_payments",
     ),
     path(
-        "v1/users/<int:user_id>/payments_plan",
+        "v1/users/<int:user_id>/payments_plan/",
         UserPaymentsPlanView.as_view(),
+        name="user_payment_plan",
+    ),
+    path(
+        "v1/users/<int:user_id>/services/<int:service_id>/",
+        ServiceUserSubscriptionsView.as_view(),
         name="service_payments",
     ),
     path(
