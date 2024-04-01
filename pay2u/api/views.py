@@ -605,27 +605,25 @@ class AddUserSubscriptionView(APIView):
         # Проверка есть ли подписка на сервис
         service = subscription.service_id
         active_subscription = self.get_active_subscription(user.id, service)
-        if active_subscription is not None:
-            # Была ли именно эта подписка
-            subscription_id = active_subscription.subscription.id
-            if subscription_id == int(new_subscription_id):
-                # Меняем статус на True, если она не была активна и ставим дату
-                if active_subscription.status is False:
-                    active_subscription.end = datetime.now()
-                    active_subscription.status = True
-                # Если была активна - не меняем дату и статус, добавляем время
-                active_subscription.end = active_subscription.end + timedelta(
-                    days=active_subscription.subscription.period
-                )
-                update_balance.save()
-                return self.send_response(active_subscription)
-            else:
-                # Если подписка была, но другая - меняем статус и ставим дату
-                self.deactivate_subscription(active_subscription)
-        # Оформляем новую подписку
-        update_balance.save()
-        new_subscription = self.create_new_subscription(user, subscription)
-        return self.send_response(new_subscription)
+        if active_subscription is None:
+            # Если подписки не существовало, то создаём её
+            update_balance.save()
+            new_subscription = self.create_new_subscription(user, subscription)
+            return self.send_response(new_subscription)
+        if active_subscription.subscription.id == int(new_subscription_id):
+            # Меняем статус на True, если она не была активна и ставим дату
+            if active_subscription.status is False:
+                active_subscription.end = datetime.now()
+                active_subscription.status = True
+            # Если была активна - не меняем дату и статус, добавляем время
+            active_subscription.end = active_subscription.end + timedelta(
+                days=active_subscription.subscription.period
+            )
+            update_balance.save()
+            return self.send_response(active_subscription)
+        else:
+            # Если подписка была, но другая - меняем статус и ставим дату
+            self.deactivate_subscription(active_subscription)
 
     def get_active_subscription(self, user_id, service):
         """
