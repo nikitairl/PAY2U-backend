@@ -590,7 +590,11 @@ class AddUserSubscriptionView(APIView):
         """
         user = get_object_or_404(User, id=user_id)
         new_subscription_id = request.data.get("subscription_id")
-        subscription = Subscription.objects.get(id=new_subscription_id)
+        try:
+            subscription = Subscription.objects.get(id=new_subscription_id)
+        except Subscription.DoesNotExist:
+            data = {"error": "Такой подписки не существует."}
+            return Response(data, status=status.HTTP_400_BAD_REQUEST)
         account_id = request.data.get("account_id")
 
         account_balance = get_object_or_404(Account, id=account_id)
