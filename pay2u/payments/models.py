@@ -50,28 +50,28 @@ class Payment(models.Model):
     document = models.ForeignKey(
         Document,
         on_delete=models.SET("DELETED"),
-        related_name="payments",
+        related_name="payment_document",
         null=False,
         blank=False,
     )
     cashback_applied = models.ForeignKey(
         CashbackApplied,
         on_delete=models.RESTRICT,
-        related_name="payments",
+        related_name="payment_cashback",
         null=False,
         blank=False,
     )
     user_subscription = models.ForeignKey(
         "subscriptions.Subscription",
         on_delete=models.SET("DELETED"),
-        related_name="payments",
+        related_name="payment_user_subscription",
         null=False,
         blank=False,
     )
     account_id = models.ForeignKey(
         "users.Account",
         on_delete=models.SET("DELETED"),
-        related_name="payments",
+        related_name="account",
         null=False,
         blank=False,
     )
