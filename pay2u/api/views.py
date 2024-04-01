@@ -571,93 +571,52 @@ class ServiceView(APIView):
 
 class AddUserSubscriptionView(APIView):
     def post(self, request, user_id: int):
-        """
-        Метод организации подписок для пользователя.
-        Если подписка уже есть - продлевает.
-        Если подписка уже есть, но другой тариф - заменяет.
-        Если подписки нет - создает новую.
-        post request example:
-                                {
-                                    "subscription_id": "3",
-                                    "account_id": "1",
-                                    "user_email": "example@example.ru"
-                                }
-        Параметры:
-            user_id (int): идентификатор пользователя
-
-        Returns:
-            Сообщение с кодом + описанием ошибки или созданную подписку.
-        """
         user = get_object_or_404(User, id=user_id)
-        new_subscription_id = request.data.get("subscription_id")
+        subscription_id = request.data.get("subscription_id")
+        subscription = self.get_subscription_or_error(subscription_id)
+
+        account_id = request.data.get("account_id")
+        account_balance = get_object_or_404(Account, id=account_id)
+        if not self.check_balance(subscription, account_balance):
+            return Response({"error": "Недостаточно средств на счете."}, status=status.HTTP_400_BAD_REQUEST)
+
+        active_subscription = self.get_active_subscription(user_id, subscription.service_id)
+        if active_subscription:
+            if active_subscription.subscription.id == subscription.id:
+                return self.extend_subscription(active_subscription)
+            else:
+                self.deactivate_subscription(active_subscription)
+
+        new_subscription = self.create_new_subscription(user, subscription)
+        return self.send_response(new_subscription)
+
+    def get_subscription_or_error(self, subscription_id):
         try:
-            subscription = Subscription.objects.get(id=new_subscription_id)
+            return Subscription.objects.get(id=subscription_id)
         except Subscription.DoesNotExist:
             data = {"error": "Такой подписки не существует."}
             return Response(data, status=status.HTTP_400_BAD_REQUEST)
-        account_id = request.data.get("account_id")
 
-        account_balance = get_object_or_404(Account, id=account_id)
-        update_balance = self.update_balance(subscription, account_balance)
-        if update_balance.balance < 0:
-            data = {"error": "Недостаточно средств на счете."}
-            return Response(data, status=status.HTTP_400_BAD_REQUEST)
-        # Проверка есть ли подписка на сервис
-        service = subscription.service_id
-        active_subscription = self.get_active_subscription(user.id, service)
-        if active_subscription is None:
-            # Если подписки не существовало, то создаём её
-            update_balance.save()
-            new_subscription = self.create_new_subscription(user, subscription)
-            return self.send_response(new_subscription)
-        if active_subscription.subscription.id == int(new_subscription_id):
-            # Меняем статус на True, если она не была активна и ставим дату
-            if active_subscription.status is False:
-                active_subscription.end = datetime.now()
-                active_subscription.status = True
-            # Если была активна - не меняем дату и статус, добавляем время
-            active_subscription.end = active_subscription.end + timedelta(
-                days=active_subscription.subscription.period
-            )
-            update_balance.save()
-            return self.send_response(active_subscription)
-        else:
-            # Если подписка была, но другая - меняем статус и ставим дату
-            self.deactivate_subscription(active_subscription)
+    def check_balance(self, subscription, account_balance):
+        account_balance.balance -= subscription.price
+        return account_balance.balance >= 0
 
     def get_active_subscription(self, user_id, service):
-        """
-        Метод проверки подписки на сервис
-        """
-        try:
-            return UserSubscription.objects.get(
-                user_id=user_id,
-                subscription__service_id=service,
-                status=True
-            )
-        except UserSubscription.DoesNotExist:
-            return None
+        return UserSubscription.objects.filter(user_id=user_id, subscription__service_id=service, status=True).first()
 
-    def deactivate_subscription(self, subscription):
-        """
-        Метод деактивации подписки
-        """
-        subscription.end = datetime.now()
-        subscription.status = False
-        subscription.renewal = False
-        subscription.save()
+    def extend_subscription(self, active_subscription):
+        active_subscription.end += timedelta(days=active_subscription.subscription.period)
+        active_subscription.status = True
+        active_subscription.save()
+        return self.send_response(active_subscription)
 
-    def update_balance(self, subscription, account_balance):
-        """
-        Калькуляция баланса
-        """
-        account_balance.balance -= subscription.price
-        return account_balance
+    def deactivate_subscription(self, active_subscription):
+        active_subscription.end = datetime.now()
+        active_subscription.status = False
+        active_subscription.renewal = False
+        active_subscription.save()
 
     def create_new_subscription(self, user, subscription):
-        """
-        Создание нового объекта подписки
-        """
         new_subscription = UserSubscription(
             user_id=user,
             subscription=subscription,
@@ -668,9 +627,9 @@ class AddUserSubscriptionView(APIView):
             end=datetime.now() + timedelta(days=subscription.period),
             trial=False
         )
+        new_subscription.save()
         return new_subscription
 
     def send_response(self, subscription):
         ser_data = UserSubscriptionSerializer(subscription).data
-        subscription.save()
         return Response(ser_data, status=status.HTTP_200_OK)
