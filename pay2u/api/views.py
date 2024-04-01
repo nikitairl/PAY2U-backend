@@ -580,7 +580,7 @@ class AddUserSubscriptionView(APIView):
         if active_subscription is not None:
             # Была ли именно эта подписка
             subscription_id = active_subscription.subscription.id
-            if int(subscription_id) == int(new_subscription_id):
+            if subscription_id == int(new_subscription_id):
                 # Меняем статус на True, если она не была активна и ставим дату
                 if active_subscription.status is False:
                     active_subscription.end = datetime.now()
