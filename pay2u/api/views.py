@@ -570,6 +570,22 @@ class ServiceView(APIView):
 
 
 class AddUserSubscriptionView(APIView):
+    """
+    Метод организации подписок для пользователя.
+    Если подписка уже есть - продлевает.
+    Если подписка уже есть, но другой тариф - заменяет.
+    Если подписки нет - создает новую.
+    post request example:
+                            {
+                                "subscription_id": "3",
+                                "account_id": "1",
+                                "user_email": "example@example.ru"
+                            }
+    Параметры:
+        user_id (int): идентификатор пользователя
+    Returns:
+        Сообщение с кодом + описанием ошибки или созданную подписку.
+    """
     def post(self, request, user_id: int):
         user = get_object_or_404(User, id=user_id)
         subscription_id = request.data.get("subscription_id")
