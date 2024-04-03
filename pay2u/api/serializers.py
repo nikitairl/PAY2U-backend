@@ -23,7 +23,7 @@ class TrialPeriodSerializer(serializers.ModelSerializer):
 class ServiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Service
-        fields = ("id", "image", "name")
+        fields = ("id", "image", "name", "availability")
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):
@@ -35,6 +35,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "name",
+            "availability",
             "price",
             "period",
             "cashback",
@@ -74,7 +75,7 @@ class PaymentsAccountSerializer(serializers.ModelSerializer):
 class AccountSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account
-        fields = ("id", "account_number", "account_status")
+        fields = ("id", "account_number")
 
 
 class CashbackAppliedSerializer(serializers.ModelSerializer):
@@ -118,6 +119,49 @@ class UserSubscriptionSerializer(serializers.ModelSerializer):
             "trial",
             "access_code"
         )
+
+
+class UserSubscriptionsSerializer(serializers.ModelSerializer):
+    user_subscription = SubscriptionSerializer(read_only=True,
+                                               source="subscription")
+
+    class Meta:
+        model = UserSubscription
+        fields = (
+            "user_subscription",
+            "id",
+            "status",
+            "renewal",
+            "end",
+        )
+
+
+class UserPaymentsPlanSerializer(serializers.ModelSerializer):
+    # account_id = serializers.SerializerMethodField()
+    service = ServiceSerializer(
+        read_only=True, source="subscription.service_id"
+    )
+    user_subscription_cost = serializers.IntegerField(
+        source="subscription.price"
+    )
+
+    # def get_account_id(self, obj):
+    #     try:
+    #         account = Account.objects.get(user=obj.user_id)
+    #         return account.id
+    #     except Account.DoesNotExist:
+    #         return None
+
+
+    class Meta:
+        model = UserSubscription
+        fields = (
+            "user_subscription_cost",
+            "service",
+            "end"
+            # "account_id",
+        )
+
 
 
 class DocumentSerializer(serializers.ModelSerializer):
