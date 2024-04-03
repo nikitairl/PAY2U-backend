@@ -18,6 +18,8 @@ from .views import (
     UserPaymentsPlanView,
     ServiceUserSubscriptionsView,
     UserSubscriptionRenewalView,
+    ActiveUserSubscriptionView,
+    AddUserSubscriptionView,
     UserSubscriptionView,
     UserSubscriptionsView,
 )
@@ -116,4 +118,9 @@ urlpatterns = [
         UserSubscriptionRenewalView.as_view(),
         name="autorenewal",
     ),
+    path(
+        "v1/users/<int:user_id>/subscriptions/",
+        AddUserSubscriptionView.as_view(),
+        name="add_user_subscription",
+    )
 ]
