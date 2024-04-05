@@ -5,9 +5,9 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api.serializers import PaymentsSerializer, DocumentSerializer
 from users.models import Account
 from .models import Document, Payment
+from .serializers import PaymentsSerializer, DocumentSerializer
 
 
 class AccountPaymentView(APIView):
@@ -34,7 +34,7 @@ class AccountPaymentView(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
 
 
-class DocumentView(APIView):  # ГОТОВО (один запрос в бд)
+class DocumentView(APIView):
     def get(self, request):
         """
         Метод получения данных правил сервиса.
@@ -50,7 +50,7 @@ class DocumentView(APIView):  # ГОТОВО (один запрос в бд)
         return Response(document_data, status=status.HTTP_200_OK)
 
 
-class PaymentsView(APIView):  # ГОТОВО (два запроса в бд)
+class PaymentsView(APIView):
     def get(self, request, user_id: int) -> Response:
         """
         Метод получения данных о платежах для указанного пользователя.
@@ -80,7 +80,7 @@ class PaymentsView(APIView):  # ГОТОВО (два запроса в бд)
             return Response(status=status.HTTP_404_NOT_FOUND)
 
 
-class PaymentsPeriodView(APIView):  # ГОТОВО (один запрос в бд)
+class PaymentsPeriodView(APIView):
     def get(self, request, user_id: int, time_period: str) -> Response:
         """
         Метод получения данных о платежах для указанного пользователя
@@ -119,7 +119,7 @@ class PaymentsPeriodView(APIView):  # ГОТОВО (один запрос в б�
             return Response(status=status.HTTP_404_NOT_FOUND)
 
 
-class PaymentView(APIView):  # ГОТОВО (один запрос в бд)
+class PaymentView(APIView):
     def get(self, request, payment_id):
         """
         Метод получения данных о конкретном платеже.
@@ -144,7 +144,7 @@ class PaymentView(APIView):  # ГОТОВО (один запрос в бд)
             return Response(status=status.HTTP_404_NOT_FOUND)
 
 
-class ServicePaymentsView(APIView):  # ГОТОВО (два запроса в бд)
+class ServicePaymentsView(APIView):
     def get(self, request, user_id: int, service_id: int) -> Response:
         """
         Метод получения данных о платежах для указанного пользователя

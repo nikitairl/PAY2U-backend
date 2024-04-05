@@ -2,13 +2,13 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api.serializers import (
+from .models import UserSubscription, Subscription
+from .serializers import (
     MainPageSerializer,
     UserPaymentsPlanSerializer,
     UserSubscriptionSerializer,
     UserSubscriptionsSerializer
 )
-from .models import UserSubscription, Subscription
 
 
 class ActiveUserSubscriptionView(APIView):

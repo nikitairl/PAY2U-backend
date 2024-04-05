@@ -1,6 +1,6 @@
 from django.urls import path
 
-from payments.view import (
+from payments.views import (
     AccountPaymentView,
     DocumentView,
     PaymentView,
@@ -8,7 +8,7 @@ from payments.view import (
     PaymentsView,
     ServicePaymentsView
 )
-from subscriptions.view import (
+from subscriptions.views import (
     ActiveUserSubscriptionView,
     MainPageView,
     NonActiveUserSubscriptionView,
@@ -18,7 +18,7 @@ from subscriptions.view import (
     UserSubscriptionView,
     UserSubscriptionsView
 )
-from users.view import AccountView
+from users.views import AccountView
 from .views import (
     AvailableServicesView,
     CategoriesView,

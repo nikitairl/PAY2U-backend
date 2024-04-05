@@ -2,8 +2,8 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api.serializers import AccountSerializer
 from .models import Account
+from .serializers import AccountSerializer
 
 
 class AccountView(APIView):

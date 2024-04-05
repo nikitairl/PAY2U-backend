@@ -10,11 +10,10 @@ from rest_framework.views import APIView
 
 from services.models import Service
 from subscriptions.models import UserSubscription, Subscription
-from users.models import Account, User
-from .serializers import (
-    AvailableServiceSerializer,
-    UserSubscriptionSerializer
+from subscriptions.serializers import (
+    AvailableServiceSerializer, UserSubscriptionSerializer
 )
+from users.models import Account, User
 from .utils import query_min_price_sort
 
 
@@ -145,14 +144,13 @@ class ServiceView(APIView):
 
 
 class AddUserSubscriptionView(APIView):
-    """
-    Метод организации подписок для пользователя.
-    Если подписка уже есть - продлевает.
-    Если подписка уже есть, но другой тариф - заменяет.
-    Если подписки нет - создает новую.
-    """
-
     def post(self, request, user_id):
+        """
+        Метод организации подписок для пользователя.
+        Если подписка уже есть - продлевает.
+        Если подписка уже есть, но другой тариф - заменяет.
+        Если подписки нет - создает новую.
+        """
         user = get_object_or_404(User, id=user_id)
         subscription_id = request.data.get("subscription_id")
         subscription = self.get_subscription_or_error(subscription_id)

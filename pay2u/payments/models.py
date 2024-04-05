@@ -1,19 +1,6 @@
 from django.db import models
 
 
-class Document(models.Model):
-    id = models.BigAutoField(primary_key=True)
-    name = models.CharField(max_length=30)
-    text = models.TextField(max_length=1000)
-
-    class Meta:
-        verbose_name = "Документ"
-        verbose_name_plural = "Документы"
-
-    def __str__(self):
-        return str(self.id)
-
-
 class CashbackApplied(models.Model):
     id = models.BigAutoField(primary_key=True)
     amount = models.IntegerField()
@@ -36,6 +23,19 @@ def increment_receipt_number():
     new_receipt_int = receipt_int + 1
     new_receipt_no = 'R' + str(new_receipt_int).zfill(4)
     return new_receipt_no
+
+
+class Document(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    name = models.CharField(max_length=30)
+    text = models.TextField(max_length=1000)
+
+    class Meta:
+        verbose_name = "Документ"
+        verbose_name_plural = "Документы"
+
+    def __str__(self):
+        return str(self.id)
 
 
 class Payment(models.Model):
