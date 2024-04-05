@@ -1,25 +1,30 @@
 from django.urls import path
 
-from .views import (
+from payments.views import (
     AccountPaymentView,
-    AccountView,
-    ActiveUserSubscriptionView,
-    AvailableServicesView,
-    СategoriesView,
-    CSRFTokenView,
     DocumentView,
+    PaymentView,
+    PaymentsPeriodView,
+    PaymentsView,
+    ServicePaymentsView
+)
+from subscriptions.views import (
+    ActiveUserSubscriptionView,
     MainPageView,
     NonActiveUserSubscriptionView,
-    PaymentsPeriodView,
-    PaymentView,
-    PaymentsView,
-    ServicePaymentsView,
-    ServiceView,
-    UserPaymentsPlanView,
     ServiceUserSubscriptionsView,
+    UserPaymentsPlanView,
     UserSubscriptionRenewalView,
     UserSubscriptionView,
-    UserSubscriptionsView,
+    UserSubscriptionsView
+)
+from users.views import AccountView
+from .views import (
+    AvailableServicesView,
+    CategoriesView,
+    CSRFTokenView,
+    ServiceView,
+    AddUserSubscriptionView
 )
 
 urlpatterns = [
@@ -103,7 +108,7 @@ urlpatterns = [
     ),
     path(
         "v1/categories/<str:category_name>/",
-        СategoriesView.as_view(),
+        CategoriesView.as_view(),
         name="categories",
     ),
     path(
@@ -116,4 +121,9 @@ urlpatterns = [
         UserSubscriptionRenewalView.as_view(),
         name="autorenewal",
     ),
+    path(
+        "v1/users/<int:user_id>/subscriptions/",
+        AddUserSubscriptionView.as_view(),
+        name="add_user_subscription",
+    )
 ]
