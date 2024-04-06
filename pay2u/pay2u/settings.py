@@ -45,7 +45,9 @@ INSTALLED_APPS = [
     "banking",
     "rest_framework",
     "debug_toolbar",
-    'drf_yasg',
+    "drf_yasg",
+    'django_celery_beat',
+    'celery_admin',
 ]
 
 MIDDLEWARE = [
@@ -93,13 +95,13 @@ if LOCAL_DB:
     print("Sqlite3 database configured")
 else:
     DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.getenv('DATABASE_NAME', 'default_db_name'),
-            'USER': os.getenv('DATABASE_USER', 'default_db_user'),
-            'PASSWORD': os.getenv('DATABASE_PASSWORD', 'default_db_password'),
-            'HOST': os.getenv('DATABASE_HOST', 'localhost'),
-            'PORT': os.getenv('DATABASE_PORT', '5432'),
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.getenv("DATABASE_NAME", "default_db_name"),
+            "USER": os.getenv("DATABASE_USER", "default_db_user"),
+            "PASSWORD": os.getenv("DATABASE_PASSWORD", "default_db_password"),
+            "HOST": os.getenv("DATABASE_HOST", "localhost"),
+            "PORT": os.getenv("DATABASE_PORT", "5432"),
         }
     }
     print("Postgresql database configured")
@@ -134,6 +136,7 @@ AUTH_PASSWORD_VALIDATORS = [
 LANGUAGE_CODE = "ru-ru"
 
 TIME_ZONE = "Europe/Moscow"
+CELERY_TIMEZONE = "Europe/Moscow"
 
 USE_I18N = True
 
@@ -154,10 +157,29 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-AUTH_USER_MODEL = 'users.User'
+AUTH_USER_MODEL = "users.User"
 
 INTERNAL_IPS = [
     # ...
     "127.0.0.1",
     # ...
 ]
+
+# Celery
+REDIS_HOST = 'redis'
+REDIS_PORT = '6379'
+BROKER_URL = "redis://localhost:6379"
+CELERY_LOG_LEVEL = "DEBUG"
+CELERY_CACHE_BACKEND = "default"
+CELERY_BROKER_URL = 'redis://' + REDIS_HOST + ':' + REDIS_PORT + '/0'
+CELERY_BROKER_TRANSPORT_OPTIONS = {'visibility_timeout': 3600}
+CELERY_RESULT_BACKEND = 'redis://' + REDIS_HOST + ':' + REDIS_PORT + '/0'
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+        "LOCATION": "my_cache_table",
+    }
+}
